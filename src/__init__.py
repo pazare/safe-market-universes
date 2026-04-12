@@ -1,0 +1,2 @@
+"""StockTrader package."""
+
