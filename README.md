@@ -1,4 +1,4 @@
-# StockTrader: Signals, Strategies, Disagreement, and Bonus Extensions
+# StockTrader: Signals, Strategies, and Disagreement
 
 This project implements the assignment as a LangGraph workflow grounded in real Yahoo Finance market data. The base system compares two distinct LLM-powered strategies on the same stock snapshot and routes their outputs through an evaluator. The bonus implementation extends that core with:
 
