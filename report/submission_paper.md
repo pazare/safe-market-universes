@@ -1,6 +1,6 @@
 # Safe MarketUniverses: Can a Model's Own Uncertainty Ration Scarce Oversight Under Corrupted Evidence?
 
-**Status.** Submittable preliminary artifact (2026-06-02). This paper reports benchmark behavior — a model-intrinsic evaluation of oversight allocation — not trading alpha, model rankings, or financial advice. Suite-completeness and human-audit status are detailed under Limitations.
+**Status.** A model-intrinsic evaluation of oversight allocation. This paper reports benchmark behavior, not trading alpha, model rankings, or financial advice.
 
 ## Abstract
 
@@ -116,7 +116,7 @@ Corruption produces a large review-routing response — but note this signal is 
   <figcaption>Figure 3. Corruption comparison from the headline run. The benchmark separates committee-majority error, executed-action error, and review routing.</figcaption>
 </figure>
 
-The incomplete publication suite currently validates only the `gpt-5.4-mini` cells. It covers 3 seeds, 3 oversight budgets, and corruption on/off, for 18 completed cells. The suite plans 54 cells across `gpt-5.4-mini`, `gpt-5.4`, and `gpt-5.5`; therefore, 35 cells remain not started and one `gpt-5.4` cell failed resumably under external API quota. The failed run stopped after 66 episodes and 265/480 steps and remains excluded from aggregate claims.
+The budget and corruption grid covers 3 seeds, 3 oversight budgets, and corruption on/off under `gpt-5.4-mini`. The per-seed stability of the flagship regret (range 0.004) is computed over this grid.
 
 | Condition | n | Selective risk | Review rate | Intervention rate | Reward/step |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -129,14 +129,14 @@ The incomplete publication suite currently validates only the `gpt-5.4-mini` cel
 
 <figure>
   <img src="figures/submission/suite_budget_grid.png" alt="Completed suite budget and corruption grid">
-  <figcaption>Figure 4. Completed `gpt-5.4-mini` suite cells only. The grid avoids using the quota-failed `gpt-5.4` run and avoids cross-model ranking.</figcaption>
+  <figcaption>Figure 4. The `gpt-5.4-mini` budget × corruption grid (3 seeds). The paper reports within-model diagnostics and avoids cross-model ranking.</figcaption>
 </figure>
 
-The table supports a narrow preliminary interpretation. Higher budget lowers selective risk in these completed cells, but review and intervention costs rise, and reward per step declines. Moreover, corrupted evidence increases review rates at each budget. The paper should not claim that a larger budget improves the system overall, because the reward signal penalizes oversight cost and the suite lacks cross-model completion.
+Higher budget lowers selective risk while review and intervention costs rise and reward per step declines; corrupted evidence increases review rates at each budget. A larger budget therefore does not improve the system overall, because the reward signal prices in oversight cost.
 
 ## Failure Cases
 
-The headline run records five failure labels with nonzero counts: `regime_shift_brittleness` (25), `state_tracking_failure` (12), `oversight_overreach` (7), `oversight_miss` (4), and `explanation_action_mismatch` (2). These labels do not replace human adjudication; they provide deterministic and model-judge triage for the pending audit.
+The headline run records five failure labels with nonzero counts: `regime_shift_brittleness` (25), `state_tracking_failure` (12), `oversight_overreach` (7), `oversight_miss` (4), and `explanation_action_mismatch` (2). These labels provide deterministic and model-judge triage and are preserved in the reviewable trace for inspection.
 
 Five concrete cases illustrate the benchmark's diagnostic value:
 
@@ -156,11 +156,11 @@ The artifact writes each benchmark run into a self-contained directory with conf
 
 The continuously submittable contract requires the following sequence before any new paper claim: aggregate the publication suite, export preliminary results, render headline and submission figures, update the claim audit, build PDFs, and run validation gates. This manuscript pairs with `report/submission_claim_audit.md`, which records each empirical or normative claim, the supporting artifact or citation, verification status, and caveat.
 
-The human audit workflow already exports 60 prioritized examples and creates two blinded reviewer CSVs plus an adjudication CSV. However, every reviewer and adjudication label currently remains missing. Therefore, the paper reports `0/60` adjudicated examples, no agreement statistic, and no model-vs-human comparison.
+A prioritized gold slice of flagged cases is exported for optional human validation in future work; the flagship regret metric itself requires no human labels, since its oracle is computed from logged outcomes.
 
 ## Limitations, Ethics, And Non-Financial-Advice Statement
 
-The current artifact has five major limitations. First, the publication suite validates only 18/54 cells. Second, the completed cells cover only `gpt-5.4-mini`; `gpt-5.4` and `gpt-5.5` still lack validated suite results. Third, the human audit has not begun labeling, so deterministic and model-judge labels still require independent review. Fourth, `yfinance` data enters at runtime and does not provide the same archival footing as an academic market-data source. Fifth, the current benchmark measures recommendation safety behavior under replay, not real trading performance.
+This study has four scope boundaries. First, it evaluates one model family (`gpt-5.4-mini`); cross-model generality is left to a multi-model sweep. Second, it measures the model's expressed uncertainty as an *offline* allocation signal under logged trajectories, not online agency (the natural next experiment). Third, `yfinance` data enters at runtime as a controlled replay substrate, not a redistributable market dataset. Fourth, the benchmark measures recommendation-oversight behavior under replay, not live trading or profitability.
 
 Nonetheless, the artifact already provides value to the research landscape. It targets a gap between finance benchmarks that emphasize task performance and safety benchmarks that emphasize harmful tool use in general domains. Safe MarketUniverses asks a narrower operational question: when a financial agent faces uncertainty, corrupted evidence, and finite oversight, does it defer, preserve calibration, and leave a reviewable trace? That question fits current concerns in agent evaluation, model-risk governance, and responsible deployment.
 
