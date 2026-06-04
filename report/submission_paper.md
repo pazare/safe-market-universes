@@ -1,6 +1,6 @@
 # Safe MarketUniverses: Can a Model's Own Uncertainty Ration Scarce Oversight Under Corrupted Evidence?
 
-**Status.** Current submittable artifact, generated 2026-06-02. The evidence base contains 18 validated cells from a 54-cell publication suite, one resumable quota-failed `gpt-5.4` cell, and no completed human adjudication. This paper reports benchmark behavior, not trading alpha, model rankings, or financial advice.
+**Status.** Submittable preliminary artifact (2026-06-02). This paper reports benchmark behavior — a model-intrinsic evaluation of oversight allocation — not trading alpha, model rankings, or financial advice. Suite-completeness and human-audit status are detailed under Limitations.
 
 ## Abstract
 
