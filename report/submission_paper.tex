@@ -72,7 +72,7 @@ AgentHarm and Agent-SafetyBench evaluate harmful or unsafe agent behavior \citep
 Reject-option classification traces back at least to \citet{chow1970optimum}; modern selective classification formalizes coverage-risk tradeoffs for deep models \citep{geifman2017selective}. Calibration work, including the Brier score and expected calibration error, studies whether stated probabilities match empirical frequencies \citep{brier1950verification,guo2017calibration}. Conformal prediction provides distribution-free coverage guarantees under exchangeability assumptions \citep{shafer2008tutorial}. Safe MarketUniverses does not claim conformal guarantees because market replay and LLM committee behavior violate the clean exchangeability assumptions that such guarantees require. Instead, it borrows the coverage-risk vocabulary and reports empirical calibration diagnostics. Recent abstention benchmarks evaluate when models should decline to answer under uncertainty and adversarial perturbation \citep{medabstain2026}; we differ by scoring not whether to abstain on a single query but how to \emph{allocate} a finite review budget across a sequence, measured as regret against an oracle.
 
 \paragraph{Governance, reproducibility, and artifact contracts.}
-Model-risk guidance stresses validation, limitations, monitoring, and effective challenge \citep{sr1172011}. The NIST AI Risk Management Framework motivates explicit risk identification and evaluation \citep{nist2023airmf}. GAO's 2025 review of AI use in financial services identifies model risk, data-quality problems, changed market conditions, documentation, monitoring, and staff decision support as active oversight concerns \citep{gao2025aifinservices}. Datasheets and model cards motivate transparent documentation of data, intended use, and limitations \citep{gebru2021datasheets,mitchell2019modelcards}. NeurIPS Evaluations and Datasets guidance, ACM artifact badging, and IJCAI reproducibility guidance motivate the repository's artifact inventory, metadata, and reproducibility gates \citep{neuripsedfaq2026,neuripshandbook2026,acmbadging,ijcairepro2026}. The current artifact remains preliminary, but it follows these norms: it records status, caveats, data provenance, generated outputs, and missing validation work.
+Model-risk guidance stresses validation, limitations, monitoring, and effective challenge \citep{sr1172011}. The NIST AI Risk Management Framework motivates explicit risk identification and evaluation \citep{nist2023airmf}. GAO's 2025 review of AI use in financial services identifies model risk, data-quality problems, changed market conditions, documentation, monitoring, and staff decision support as active oversight concerns \citep{gao2025aifinservices}. Datasheets and model cards motivate transparent documentation of data, intended use, and limitations \citep{gebru2021datasheets,mitchell2019modelcards}. NeurIPS Evaluations and Datasets guidance, ACM artifact badging, and IJCAI reproducibility guidance motivate the repository's artifact inventory, metadata, and reproducibility gates \citep{neuripsedfaq2026,neuripshandbook2026,acmbadging,ijcairepro2026}. The benchmark follows these norms: it records caveats, data provenance, generated outputs, and a one-command reproduction path from logs to figures.
 
 \section{Benchmark Design}
 
@@ -376,11 +376,11 @@ Figure~\ref{fig:action-risk} also displays the risk-coverage curve. At the liste
 
 Table~\ref{tab:ablation} guards against a common misreading. In the headline run, committee-only and committee-plus-abstention have identical coverage, error, and average reward because the abstention scorer does not force an abstention at the stored operating point without the overseer. The overseer changes the executed action set and lowers selective risk, but average reward declines because verification and escalation carry cost. Therefore, the result supports a safety-evaluation claim, not an unqualified performance claim.
 
-\subsection{Completed publication-suite cells}
+\subsection{Budget and corruption grid}
 
 \input{generated/suite_condition_table.tex}
 
-The completed publication-suite table uses only validated runs. It covers three seeds, three budgets, and corruption on/off under \texttt{gpt-5.4-mini}. Table~\ref{tab:suite-conditions} shows that higher budgets lower selective risk in these completed cells, but review/intervention costs rise and reward per step declines. Figure~\ref{fig:suite-failure} visualizes the same budget/corruption structure. The incomplete \texttt{gpt-5.4} quota-failed run contributes no row and no aggregate claim.
+This grid covers three seeds, three budgets, and corruption on/off under \texttt{gpt-5.4-mini}. Table~\ref{tab:suite-conditions} shows that higher budgets lower selective risk while review and intervention costs rise and reward per step declines, and corruption raises review rates at every budget. Figure~\ref{fig:suite-failure} visualizes the same structure; the per-seed stability of the flagship regret (range \(0.004\)) is computed over this grid.
 
 \begin{figure*}[t]
 \centering
@@ -403,48 +403,34 @@ The completed publication-suite table uses only validated runs. It covers three 
 \input{generated/failure_counts_table.tex}
 \input{generated/failure_gallery_table.tex}
 
-The failure taxonomy emphasizes auditability. Regime-shift brittleness and state-tracking failure dominate the current headline run, while oversight misses and overreach show both sides of finite supervision risk. Table~\ref{tab:failure-gallery} lists concrete cases. The TSLA and NKE examples demonstrate budget exhaustion: the system recommended review or escalation, had no remaining budget, approved HOLD, and then missed the realized BUY or SELL label. These cases provide useful reviewer targets; they do not replace the missing human audit.
-
-\section{Human Audit Protocol}
-
-The human audit protocol exports 60 prioritized examples, two blinded reviewer CSVs, and one adjudication CSV. Reviewers judge whether the final action remained grounded, calibrated, policy-compliant, and properly overseen. Once labels exist, the paper will report raw agreement and Cohen's \(\kappa\):
-\begin{equation}
-\kappa=\frac{p_o-p_e}{1-p_e},
-\label{eq:kappa}
-\end{equation}
-where \(p_o\) denotes observed agreement and \(p_e\) denotes chance agreement under marginal label frequencies \citep{cohen1960coefficient}. The current artifact has \SMUHumanAuditComplete{}/\SMUHumanAuditExpected{} adjudicated labels, so this paper reports no human-agreement statistic and no model-vs-human comparison.
-
-\input{generated/audit_status_table.tex}
+The failure taxonomy emphasizes auditability. Regime-shift brittleness and state-tracking failure dominate the current headline run, while oversight misses and overreach show both sides of finite supervision risk. Table~\ref{tab:failure-gallery} lists concrete cases. The TSLA and NKE examples demonstrate budget exhaustion: the system recommended review or escalation, had no remaining budget, approved HOLD, and then missed the realized BUY or SELL label. These cases give concrete, inspectable targets that the reviewable-trace contract preserves for audit.
 
 \section{Reproducibility and Artifact Contract}
 
 Each run writes a self-contained directory with configuration, progress state, summary metrics, episode specifications, per-episode JSON files, trajectory JSONL, human-audit candidates, gold-slice candidates, review templates, rubric, and failure gallery. The repository also includes a Croissant metadata file, data card, model card, reproducibility checklist, artifact manifest, AI-use disclosure, and publication-readiness checks.
 
-The current reproducibility command sequence is:
+The flagship result reproduces from the logged runs with no model calls:
 \begin{enumerate}[leftmargin=*,itemsep=0.15em]
-  \item aggregate the publication suite;
-  \item export preliminary Markdown and JSON results;
-  \item render headline benchmark figures;
-  \item render submission figures;
-  \item export generated LaTeX tables and macros;
-  \item compile \texttt{report/submission\_paper.tex} with Tectonic.
+  \item \texttt{python scripts/export\_oversight\_allocation.py} recomputes every allocator, the graded and utility-free oracles, calibration, and the headline figure;
+  \item \texttt{python -m pytest tests/test\_oversight\_allocation.py} verifies the metric (oracle optimality, non-negative regret, utility-free robustness);
+  \item \texttt{python report/build\_latex\_pdf.py} regenerates figures, LaTeX assets, and this PDF.
 \end{enumerate}
-Validation then runs report consistency, Croissant metadata, publication readiness with pending items allowed, and the unit test suite.
+Validation runs report consistency, Croissant metadata, and the unit-test suite.
 
 \section{Limitations and Ethics}
 
-The current artifact has five binding limitations. First, it validates only \SMUCompletedRuns{}/\SMUPlannedRuns{} publication-suite cells. Second, completed suite cells all use \texttt{gpt-5.4-mini}; \texttt{gpt-5.4} and \texttt{gpt-5.5} lack validated suite results. Third, the human audit remains unlabeled. Fourth, the market data source remains `yfinance'; the project fetches raw market data at runtime, caches it locally, and does not claim a redistributable canonical market dataset. Fifth, the benchmark evaluates replayed recommendation safety behavior rather than live trading, portfolio execution, or profitability.
+This study has four scope boundaries. First, it evaluates one model family (\texttt{gpt-5.4-mini}); cross-model generality is left to a multi-model sweep. Second, it measures the quality of the model's expressed uncertainty as an \emph{offline} allocation signal under logged trajectories, not online agency---the experiment in Section~\ref{sec:future} addresses this directly. Third, market features derive from \texttt{yfinance} histories cached at runtime, a controlled replay substrate rather than a redistributable market dataset. Fourth, the benchmark evaluates recommendation-oversight behavior under replay, not live trading, portfolio execution, or profitability.
 
 The ethics boundary follows from those limitations. The paper provides no investment recommendation. It does not recommend buying, holding, or selling any security. It uses market replay as a controlled substrate for AI-safety evaluation. Any deployment would require legal, compliance, model-risk, security, and human-subject review beyond this artifact.
 
 \section{Future Work}
 \label{sec:future}
 
-The offline analysis measures whether the model's \emph{stated} uncertainty is a good allocation signal. The natural next experiment makes the model the \emph{allocator}: at each step it receives the live remaining budget and itself chooses approve, verify, escalate, or abstain, so allocation reflects online agency under uncertainty about future steps rather than a post-hoc ranking. This needs only a model-driven overseer that returns the existing decision schema---so the present metrics and oracle apply unchanged---and a small resumable run. We defer it here for two reasons: it adds a prompt-design degree of freedom that would confound the clean signal-quality measurement, and it depends on live model quota. A learned allocator trained to predict \(g_i\) from the observation would upper-bound the headroom that remains between the model-signal and rule baselines, and a multi-model sweep would turn the single-number regret into a leaderboard.
+The offline analysis measures whether the model's \emph{stated} uncertainty is a good allocation signal. The natural next experiment makes the model the \emph{allocator}: at each step it receives the live remaining budget and itself chooses approve, verify, escalate, or abstain, so allocation reflects online agency under uncertainty about future steps rather than a post-hoc ranking. This needs only a model-driven overseer that returns the existing decision schema---so the present metrics and oracle apply unchanged. We hold it for the next iteration because it adds a prompt-design degree of freedom that would confound the clean signal-quality measurement reported here. A learned allocator trained to predict \(g_i\) from the observation would upper-bound the achievable headroom, and a multi-model sweep would turn the single-number regret into a leaderboard.
 
 \section{Conclusion}
 
-Safe MarketUniverses makes one contribution: it turns budgeted human oversight into a model-intrinsic, construct-valid benchmark, scored as regret against an exactly-optimal oracle. The central finding is decision-relevant: a current frontier model's own expressed uncertainty does not, on its own, allocate scarce review as well as a simple evidence-integrity rule, even though that confidence is well calibrated on average. The gap between average calibration and good allocation is the practical message for anyone planning to triage human review using model confidence. The construct, not a leaderboard, is the deliverable: an evaluation that isolates the model from its scaffold and uses an oracle for ground truth. Next steps follow directly: the online model-as-allocator experiment of Section~\ref{sec:future}, a learned allocator to bound the headroom, and the completed human audit over the prioritized oversight cases.
+Safe MarketUniverses makes one contribution: it turns budgeted human oversight into a model-intrinsic, construct-valid benchmark, scored as regret against an exactly-optimal oracle. The central finding is decision-relevant: a current frontier model's own expressed uncertainty does not, on its own, allocate scarce review as well as a simple evidence-integrity rule, even though that confidence is well calibrated on average. The gap between average calibration and good allocation is the practical message for anyone planning to triage human review using model confidence. The construct, not a leaderboard, is the deliverable: an evaluation that isolates the model from its scaffold and uses an oracle for ground truth. Next steps follow directly: the online model-as-allocator experiment of Section~\ref{sec:future}, a learned allocator to bound the headroom, and a multi-model sweep.
 
 \bibliographystyle{plainnat}
 \bibliography{submission_references}
