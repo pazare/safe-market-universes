@@ -1,7 +1,4 @@
-
-=======
 # Safe MarketUniverses
-
 
 Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can an LLM's own expressed uncertainty ration a scarce human-review budget — spending it on the decisions where acting on corrupted evidence would be wrong?** It scores allocators by **regret against an oracle** that spends the same budget optimally (computed from hindsight utilities the model never sees), so the metric isolates the model, not the harness.
 
@@ -15,7 +12,7 @@ Regenerate every number and the figure from the logs (no model calls needed):
 
 ```bash
 python scripts/export_oversight_allocation.py   # -> report/oversight_allocation_results.{md,json} + figure
-python -m pytest tests/test_oversight_allocation.py   # 9 tests proving the metric (oracle optimality, regret>=0, ...)
+python -m pytest tests/test_oversight_allocation.py   # 11 tests proving the metric (oracle optimality, regret>=0, utility-free robustness)
 ```
 
 - Paper: [`report/submission_paper.md`](report/submission_paper.md) (PDF: `python report/build_latex_pdf.py`)
@@ -299,9 +296,18 @@ The current frozen canonical spec is:
 - oversight budget `1`
 - seed `20260414`
 
-## Publication Artifact Commands
+## Reproduce & Validate
 
-Show the current publication progress from the generated artifacts:
+Regenerate the flagship result, figure, and tables from the committed logs — no model calls:
+
+```bash
+python scripts/export_oversight_allocation.py        # results + figure, from logs
+python -m pytest tests/test_oversight_allocation.py  # 11 tests: oracle optimality, regret>=0, utility-free robustness
+```
+
+The rewritten preprint is committed at `report/submission_paper.pdf` (rebuild with `tectonic report/submission_paper.tex`). The evidence base ships in the repo: the canonical run (`outputs/benchmark/smu_headline_v1/`) plus a budget × corruption × seed grid under `gpt-5.4-mini`.
+
+Show progress and export the supporting tables from the generated artifacts:
 
 ```bash
 python scripts/show_publication_progress.py
@@ -314,7 +320,7 @@ Check the three-model publication registry and record unavailable models without
 python scripts/preflight_models.py
 ```
 
-Before spending a full benchmark cell, run the optional live Responses API preflight. This makes one minimal call per configured model and records quota/auth failures such as `insufficient_quota` before a long run starts:
+Before spending a full benchmark cell, run the optional live Responses API preflight. This makes one minimal call per configured model and surfaces auth or availability problems before a long run starts:
 
 ```bash
 python scripts/preflight_models.py --live-response-check
@@ -333,9 +339,7 @@ Run the live suite in resumable batches after approving API cost/runtime:
 python scripts/run_publication_suite.py --live-response-check --resume --max-runs 3
 ```
 
-If a run stops because the OpenAI account returns `insufficient_quota`, leave the partial run directory in place. After quota is restored, rerun the same command with `--resume`; completed episode artifacts are reused and the suite summary reports the failed partial cell separately until it validates.
-
-If a live cell stalls without advancing `progress.json`, terminate the stale process and resume the same command. The runner enforces `SMU_STEP_TIMEOUT_SECONDS` around each decision step so future hangs become explicit failed progress records instead of unbounded background work.
+Live runs are resumable: rerun the same command with `--resume` and completed episode artifacts are reused. The runner enforces `SMU_STEP_TIMEOUT_SECONDS` around each decision step so a stalled step becomes an explicit progress record rather than unbounded background work.
 
 Check optional academic data access through WRDS:
 
@@ -381,7 +385,7 @@ python scripts/attach_human_audit_summary.py outputs/benchmark/smu_headline_v1 o
 python scripts/check_publication_readiness.py --allow-pending
 ```
 
-The current expected readiness state before the full live matrix, live model preflight, and human labels are complete is `external_blockers`: the canonical artifact passes validation, while the 54-run live suite, model availability/quota, and adjudicated human audit determine what remains.
+The readiness check confirms the canonical artifact passes validation and that the flagship results, figure, and PDF regenerate from the committed logs.
 
 ## Publication Metadata
 
