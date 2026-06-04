@@ -1,5 +1,7 @@
 # Safe MarketUniverses: Can a Model's Own Uncertainty Ration Scarce Oversight Under Corrupted Evidence?
 
+**Author.** Pablo Zavala, Carnegie Mellon University
+
 **Status.** A model-intrinsic evaluation of oversight allocation. This paper reports benchmark behavior, not trading alpha, model rankings, or financial advice.
 
 ## Abstract

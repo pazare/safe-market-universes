@@ -30,7 +30,7 @@ This file is the short operational checklist for the final pass now that the Ope
 
 ## 4. GitHub Safety Checklist
 
-- confirm [`.gitignore`](/Users/pablo/Desktop/Agentic%20AI/Trading%20Simulation/.gitignore) still includes `.env`
+- confirm [`.gitignore`](../.gitignore) still includes `.env`
 - after `git init`, run `git status --short` and confirm `.env` does not appear
 - commit source code, prompts, outputs, README, and report assets
 - do not commit `.venv/` or `__pycache__/`
