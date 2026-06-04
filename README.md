@@ -1,4 +1,7 @@
-# Safe MarketUniverses v1
+
+=======
+# StockTrader: Signals, Strategies, and Disagreement
+
 
 Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can an LLM's own expressed uncertainty ration a scarce human-review budget — spending it on the decisions where acting on corrupted evidence would be wrong?** It scores allocators by **regret against an oracle** that spends the same budget optimally (computed from hindsight utilities the model never sees), so the metric isolates the model, not the harness.
 
