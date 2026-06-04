@@ -1,0 +1,212 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "sc": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/",
+    "dct": "http://purl.org/dc/terms/",
+    "rai": "http://mlcommons.org/croissant/RAI/",
+    "citeAs": "cr:citeAs",
+    "column": "cr:column",
+    "conformsTo": "dct:conformsTo",
+    "dataType": {
+      "@id": "cr:dataType",
+      "@type": "@vocab"
+    },
+    "extract": "cr:extract",
+    "field": "cr:field",
+    "fileObject": "cr:fileObject",
+    "key": "cr:key",
+    "recordSet": "cr:recordSet",
+    "source": "cr:source"
+  },
+  "@type": "sc:Dataset",
+  "@id": "safe-marketuniverses-v1",
+  "name": "Safe MarketUniverses v1 Benchmark Artifacts",
+  "description": "Generated benchmark artifacts and metadata for evaluating calibrated deferral, finite-budget oversight, corrupted-evidence response, and auditability in long-horizon financial recommendation agents.",
+  "version": "smu-artifact-v2",
+  "conformsTo": "http://mlcommons.org/croissant/1.1",
+  "url": "https://github.com/pazare/stocktrader",
+  "license": "https://opensource.org/license/mit",
+  "isAccessibleForFree": true,
+  "keywords": [
+    "agent evaluation",
+    "financial recommendation agents",
+    "calibrated abstention",
+    "human oversight",
+    "benchmark artifacts"
+  ],
+  "citeAs": "See CITATION.cff",
+  "creator": [
+    {
+      "@type": "Organization",
+      "name": "Safe MarketUniverses contributors"
+    }
+  ],
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "summary_json",
+      "name": "Canonical benchmark summary",
+      "contentUrl": "outputs/benchmark/smu_headline_v1/summary.json",
+      "encodingFormat": "application/json"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "trajectories_jsonl",
+      "name": "Canonical benchmark trajectories",
+      "contentUrl": "outputs/benchmark/smu_headline_v1/trajectories.jsonl",
+      "encodingFormat": "application/jsonl"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "human_audit_candidates_jsonl",
+      "name": "Human audit candidates",
+      "contentUrl": "outputs/benchmark/smu_headline_v1/human_audit_candidates.jsonl",
+      "encodingFormat": "application/jsonl"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "benchmark_steps",
+      "name": "Benchmark step trajectories",
+      "description": "One record per agent decision step, including observation evidence, committee votes, abstention state, overseer decision, realized outcome, reward, corruption state, and audit labels.",
+      "key": [
+        "benchmark_steps/episode_id",
+        "benchmark_steps/step_index"
+      ],
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark_steps/episode_id",
+          "name": "episode_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "trajectories_jsonl"
+            },
+            "extract": {
+              "column": "episode_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark_steps/step_index",
+          "name": "step_index",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "trajectories_jsonl"
+            },
+            "extract": {
+              "column": "step_index"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark_steps/regime_label",
+          "name": "regime_label",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "trajectories_jsonl"
+            },
+            "extract": {
+              "column": "regime_label"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark_steps/executed_action",
+          "name": "executed_action",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "trajectories_jsonl"
+            },
+            "extract": {
+              "column": "executed_action"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark_steps/realized_outcome",
+          "name": "realized_outcome",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "trajectories_jsonl"
+            },
+            "extract": {
+              "column": "realized_outcome"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "benchmark_steps/corruption_active",
+          "name": "corruption_active",
+          "dataType": "sc:Boolean",
+          "source": {
+            "fileObject": {
+              "@id": "trajectories_jsonl"
+            },
+            "extract": {
+              "column": "corruption_active"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "human_audit_candidates",
+      "name": "Prioritized human audit candidates",
+      "description": "The ordered subset of benchmark steps exported for blinded two-reviewer labeling and adjudication.",
+      "key": [
+        "human_audit_candidates/episode_id",
+        "human_audit_candidates/step_index"
+      ],
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "human_audit_candidates/episode_id",
+          "name": "episode_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "human_audit_candidates_jsonl"
+            },
+            "extract": {
+              "column": "episode_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "human_audit_candidates/failure_labels",
+          "name": "failure_labels",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "human_audit_candidates_jsonl"
+            },
+            "extract": {
+              "column": "failure_labels"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "rai:useCases": "Safety evaluation of long-horizon recommendation agents under uncertainty, corrupted evidence, and finite oversight budgets.",
+  "rai:outOfScopeUses": "Investment advice, live trading, trading-alpha claims, or redistribution of raw market data as a canonical dataset.",
+  "rai:dataCollection": "Market features are derived at runtime from yfinance daily U.S. equity OHLCV data and cached locally for reproducibility diagnostics.",
+  "rai:personalSensitiveInformation": "No personal or sensitive human-subject data is intentionally included.",
+  "rai:limitations": "Raw market data is not redistributed as the contribution; model APIs and yfinance data may change over time; publication-level claims require completed multi-model reruns and human audit."
+}

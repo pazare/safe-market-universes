@@ -1,5 +1,5 @@
 """
-Convert report/report.md and report/ai_use_appendix.md to PDF via
+Convert markdown reports in report/ to PDF via
 styled HTML + Chrome headless. Mermaid blocks are replaced with a
 hand-crafted SVG diagram so no JS renderer is required.
 """
@@ -284,6 +284,33 @@ tbody tr:nth-child(even) { background: #f9fafb; }
 tbody tr:nth-child(odd)  { background: #fff; }
 tbody td { padding: 6px 9px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
 
+img {
+    display: block;
+    max-width: 100%;
+    margin: 0 auto 6px auto;
+    page-break-inside: avoid;
+}
+figure {
+    margin: 0 0 18px 0;
+    page-break-inside: avoid;
+}
+figcaption {
+    font-size: 8.2pt;
+    color: #4b5563;
+    line-height: 1.45;
+    text-align: left;
+    margin-top: 5px;
+}
+.equation {
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 9.3pt;
+    background: #f8fafc;
+    border-left: 3px solid #1f2937;
+    padding: 8px 10px;
+    margin: 0 0 12px 0;
+    page-break-inside: avoid;
+}
+
 .diagram-wrap {
     margin: 0 0 16px 0;
     page-break-inside: avoid;
@@ -308,7 +335,20 @@ _MERMAID_FENCE = re.compile(
 )
 
 
-def md_to_html(source: str, title: str) -> str:
+def _resolve_local_image_sources(body: str, base_dir: Path) -> str:
+    return re.sub(r'<img([^>]+?)src="([^"]+)"', lambda m: f'<img{m.group(1)}src="{_replace_src(m.group(2), base_dir)}"', body)
+
+
+def _replace_src(src: str, base_dir: Path) -> str:
+    if src.startswith(("http://", "https://", "data:", "file:")):
+        return src
+    path = Path(src)
+    if not path.is_absolute():
+        path = base_dir / path
+    return path.resolve().as_uri()
+
+
+def md_to_html(source: str, title: str, *, base_dir: Path = REPORT_DIR) -> str:
     md = MarkdownIt("commonmark", {"html": True}).enable("table")
 
     def _replace_mermaid(m: re.Match) -> str:
@@ -321,6 +361,7 @@ def md_to_html(source: str, title: str) -> str:
 
     processed = _MERMAID_FENCE.sub(_replace_mermaid, source)
     body = md.render(processed)
+    body = _resolve_local_image_sources(body, base_dir)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -348,6 +389,7 @@ def html_to_pdf(html_path: Path, pdf_path: Path) -> None:
         "--disable-dev-shm-usage",
         "--run-all-compositor-stages-before-draw",
         "--disable-extensions",
+        "--no-pdf-header-footer",
         "--print-to-pdf-no-header",
         f"--print-to-pdf={pdf_path}",
         html_path.as_uri(),
@@ -361,7 +403,7 @@ def html_to_pdf(html_path: Path, pdf_path: Path) -> None:
 
 def convert(md_path: Path, pdf_path: Path, title: str) -> None:
     source = md_path.read_text(encoding="utf-8")
-    html = md_to_html(source, title)
+    html = md_to_html(source, title, base_dir=md_path.parent)
     with tempfile.NamedTemporaryFile(
         suffix=".html", delete=False, mode="w", encoding="utf-8"
     ) as fh:
@@ -389,4 +431,18 @@ if __name__ == "__main__":
         REPORT_DIR / "ai_use_appendix.pdf",
         "AI Use Appendix",
     )
+    note_path = REPORT_DIR / "safe_market_universes_note.md"
+    if note_path.exists():
+        convert(
+            note_path,
+            REPORT_DIR / "safe_market_universes_note.pdf",
+            "Safe MarketUniverses Note",
+        )
+    submission_path = REPORT_DIR / "submission_paper.md"
+    if submission_path.exists():
+        convert(
+            submission_path,
+            REPORT_DIR / "submission_paper.pdf",
+            "Safe MarketUniverses Submission Paper",
+        )
     print("Done.")

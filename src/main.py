@@ -16,12 +16,22 @@ from src.backtest import (
     DEFAULT_BACKTEST_HOLD_BAND_PCT,
     run_backtest,
 )
+from src.benchmark.runtime import run_safe_market_universes
+from src.benchmark.spec import (
+    CANONICAL_EPISODES,
+    CANONICAL_HORIZON,
+    CANONICAL_JUDGE_SAMPLE_SIZE,
+    CANONICAL_OVERSIGHT_BUDGET,
+    CANONICAL_RUN_ID,
+    CANONICAL_SEED,
+    CANONICAL_TICKERS,
+)
 from src.config import REPORT_DIR, load_environment
 from src.llm import verify_openai_call
 from src.market_data import verify_yfinance_fetch
 from src.orchestration import build_graph, export_graph_mermaid, write_summary
 
-DEFAULT_TICKERS = ["COST", "HIMS", "SMCI", "JNJ", "TSLA"]
+DEFAULT_ASSIGNMENT_TICKERS = ["COST", "HIMS", "SMCI", "JNJ", "TSLA"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,6 +62,51 @@ def parse_args() -> argparse.Namespace:
         "--skip-backtest",
         action="store_true",
         help="Skip generating outputs/backtest.json.",
+    )
+    parser.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="Run the Safe MarketUniverses benchmark instead of the assignment workflow.",
+    )
+    parser.add_argument(
+        "--benchmark-episodes",
+        type=int,
+        default=CANONICAL_EPISODES,
+        help="Number of benchmark episodes to generate in Safe MarketUniverses mode.",
+    )
+    parser.add_argument(
+        "--benchmark-horizon",
+        type=int,
+        default=CANONICAL_HORIZON,
+        help="Trading-day horizon per benchmark episode.",
+    )
+    parser.add_argument(
+        "--benchmark-oversight-budget",
+        type=int,
+        default=CANONICAL_OVERSIGHT_BUDGET,
+        help="Oversight interventions available per episode in benchmark mode.",
+    )
+    parser.add_argument(
+        "--benchmark-seed",
+        type=int,
+        default=CANONICAL_SEED,
+        help="Random seed for deterministic Safe MarketUniverses episode generation.",
+    )
+    parser.add_argument(
+        "--benchmark-disable-corruption",
+        action="store_true",
+        help="Disable ToolPoisonBench-style corruption events in benchmark mode.",
+    )
+    parser.add_argument(
+        "--benchmark-judge-sample-size",
+        type=int,
+        default=CANONICAL_JUDGE_SAMPLE_SIZE,
+        help="Number of benchmark steps to send to the model-based quality judge.",
+    )
+    parser.add_argument(
+        "--benchmark-run-id",
+        default=CANONICAL_RUN_ID,
+        help="Optional output folder name for benchmark mode.",
     )
     parser.add_argument(
         "--backtest-checkpoints",
@@ -88,6 +143,32 @@ def market_only_run(tickers: list[str]) -> None:
         snapshot = verify_yfinance_fetch(ticker)
         print(f"\n=== {ticker} ===")
         print(json.dumps(snapshot, indent=2))
+
+
+def benchmark_run(
+    tickers: list[str] | None,
+    model: str | None,
+    *,
+    benchmark_episodes: int,
+    benchmark_horizon: int,
+    benchmark_oversight_budget: int,
+    benchmark_seed: int,
+    benchmark_disable_corruption: bool,
+    benchmark_judge_sample_size: int,
+    benchmark_run_id: str | None,
+) -> None:
+    summary_path = run_safe_market_universes(
+        tickers=tickers,
+        episode_count=benchmark_episodes,
+        horizon=benchmark_horizon,
+        oversight_budget=benchmark_oversight_budget,
+        seed=benchmark_seed,
+        model=model,
+        enable_corruption=not benchmark_disable_corruption,
+        judge_sample_size=benchmark_judge_sample_size,
+        run_id=benchmark_run_id,
+    )
+    print(f"Saved Safe MarketUniverses benchmark outputs at {summary_path}.")
 
 
 def full_run(
@@ -145,7 +226,10 @@ def full_run(
 def main() -> None:
     load_environment()
     args = parse_args()
-    tickers = [ticker.upper() for ticker in (args.tickers or DEFAULT_TICKERS)]
+    if args.benchmark:
+        tickers = [ticker.upper() for ticker in args.tickers] if args.tickers else CANONICAL_TICKERS
+    else:
+        tickers = [ticker.upper() for ticker in (args.tickers or DEFAULT_ASSIGNMENT_TICKERS)]
 
     if args.verify_setup:
         verify_setup(args.model)
@@ -153,6 +237,20 @@ def main() -> None:
 
     if args.market_only:
         market_only_run(tickers)
+        return
+
+    if args.benchmark:
+        benchmark_run(
+            tickers,
+            args.model,
+            benchmark_episodes=args.benchmark_episodes,
+            benchmark_horizon=args.benchmark_horizon,
+            benchmark_oversight_budget=args.benchmark_oversight_budget,
+            benchmark_seed=args.benchmark_seed,
+            benchmark_disable_corruption=args.benchmark_disable_corruption,
+            benchmark_judge_sample_size=args.benchmark_judge_sample_size,
+            benchmark_run_id=args.benchmark_run_id,
+        )
         return
 
     full_run(
