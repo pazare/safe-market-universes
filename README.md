@@ -1,12 +1,12 @@
 # Safe MarketUniverses
 
-Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can an LLM's own expressed uncertainty ration a scarce human-review budget — spending it on the decisions where acting on corrupted evidence would be wrong?** It scores allocators by **regret against an oracle** that spends the same budget optimally (computed from hindsight utilities the model never sees), so the metric isolates the model, not the harness.
+Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can model-emitted uncertainty signals ration scarce human review under corrupted evidence?** It scores allocators by **regret against an oracle** that spends the same review budget optimally from hindsight utilities the model never sees, so the metric isolates the model signal rather than the harness.
 
 This is a safety-evaluation artifact, not a trading system and not investment advice. Finance is the testbed because evidence integrity, uncertainty, disagreement, and review cost are visible in a compact domain.
 
 ### Key finding
 
-On the canonical run (120 episodes / 480 steps), the benchmark cleanly separates allocators. Regret per step at K=1 is **0.091** for a hand-coded evidence-integrity rule, **0.176** for the model's own confidence/verification signals, and **0.191** for random. The takeaway is decision-relevant: a model that is well calibrated on average (**committee ECE 0.102**) does not, on its own, concentrate scarce review on the steps that need it. **Calibration on average ≠ knowing where review should go** — exactly the gap to measure before triaging human oversight with model confidence. Stable across 3 seeds (range 0.004). A utility-free robustness oracle confirms the model≈random conclusion and shows the hand-coded rule's edge is an artifact of the utility scale (it becomes the worst baseline once every committee error counts equally).
+On the canonical run (120 episodes / 480 steps), the benchmark separates allocators. Regret per step at K=1 is **0.091** for a hand-coded evidence-integrity baseline, **0.176** for model-emitted confidence and verification signals, and **0.191** for random. The takeaway is decision-relevant: relatively good average calibration (**committee-confidence ECE 0.102**) does not imply good allocation of scarce review. In short: **average calibration is not review triage**. Across three logged seed groups, model-signal regret varies by **0.004**. A utility-free robustness oracle confirms the model-near-random conclusion and shows that the rule baseline's graded-oracle edge depends on the utility scale.
 
 Regenerate every number and the figure from the logs (no model calls needed):
 
@@ -15,10 +15,10 @@ python scripts/export_oversight_allocation.py   # -> report/oversight_allocation
 python -m pytest tests/test_oversight_allocation.py   # 11 tests proving the metric (oracle optimality, regret>=0, utility-free robustness)
 ```
 
-- Paper: [`report/submission_paper.md`](report/submission_paper.md) (PDF: `python report/build_latex_pdf.py`)
+- Paper: [`report/submission_paper.tex`](report/submission_paper.tex) and [`report/submission_paper.pdf`](report/submission_paper.pdf) (build: `python report/build_latex_pdf.py`)
 - Write-up: [`report/blog_misspent_oversight.md`](report/blog_misspent_oversight.md) — how I caught the benchmark grading itself, and the fix.
 
-> **Scope note.** The flagship metric is model-intrinsic by design: it scores the model's *own* uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline. Corruption-conditioned review routing is reported separately as a harness diagnostic, not as a model property.
+> **Scope note.** The flagship metric is model-intrinsic by design: it scores model-emitted uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline. Corruption-conditioned review routing is reported separately as a harness diagnostic, not as a model property.
 
 ## Why this exists
 
@@ -26,7 +26,7 @@ Most agent demos are judged by surface plausibility: the answer sounds reasonabl
 
 The supporting diagnostics are deliberately subordinate to that flagship construct:
 
-- calibration: does the reliability score track realized correctness closely enough to guide review?
+- calibration: does committee confidence track realized correctness closely enough to be useful as an allocation signal?
 - selective action: does the system defer or verify instead of forcing every low-reliability case into BUY/HOLD/SELL?
 - auditability: does the run preserve enough evidence for a reviewer to challenge each approval, miss, or overreach?
 
@@ -179,7 +179,7 @@ Regime summary from the headline run:
 | `high_momentum_speculative` | `63.6%` | `33.0%` |
 | `recent_drawdown` | `64.8%` | `51.1%` |
 
-The remaining honest limitation is no longer just a tiny artifact: the full headline run includes `84` residual mixed-transition steps with `48.8%` majority error. This slice is now explicitly labeled `mixed_transition_residual` and treated as a diagnostic residual regime rather than as a canonical named market regime.
+The full headline run includes `84` residual mixed-transition steps with `48.8%` majority error. This slice is explicitly labeled `mixed_transition_residual` and treated as a diagnostic residual regime rather than as a canonical named market regime.
 
 ## Original Assignment Lineage
 
@@ -368,7 +368,6 @@ Validate the canonical artifact contract and manuscript values:
 python scripts/validate_artifact_contract.py outputs/benchmark/smu_headline_v1
 python scripts/export_paper_tables.py outputs/benchmark/smu_headline_v1 --output /tmp/smu_tables
 python scripts/export_preliminary_results.py --output report/preliminary_results.md --json-output report/preliminary_results.json
-python scripts/check_report_consistency.py report/safe_market_universes_note.md outputs/benchmark/smu_headline_v1
 python scripts/check_croissant_metadata.py metadata/smu_croissant.json
 ```
 
@@ -404,7 +403,7 @@ This repo includes:
 - `LICENSE`
 - `.github/workflows/ci.yml`
 
-Known data limitation: the current implementation uses `yfinance` for runtime market-data fetches. Raw market data is not the contribution and is not claimed as a redistributable canonical dataset. A future publication-grade release should migrate to WRDS/CRSP/Compustat or another source with explicit academic access and reproducibility terms.
+Data-scope note: the current implementation uses `yfinance` for runtime market-data fetches. Raw market data is not the contribution and is not claimed as a redistributable canonical dataset. A future archival release should use a source with explicit academic access and reproducibility terms.
 
 The current headline safety setting is also budget `1`, because the frozen tuning matrix shows it is the best compromise between unresolved risk and unnecessary oversight spending.
 
@@ -460,11 +459,6 @@ Benchmark outputs:
 - `outputs/benchmark/<run_id>/...`
 
 Pre-generated outputs are included so a reviewer can inspect the artifact without using your API key.
-
-Benchmark note and application appendix drafts live at:
-
-- [`report/safe_market_universes_note.md`](report/safe_market_universes_note.md)
-- [`report/application_appendix.md`](report/application_appendix.md)
 
 ## Secret Handling And GitHub Safety
 

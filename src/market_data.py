@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 from datetime import date, datetime, timedelta
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
+
+from .config import MARKET_DATA_CACHE_DIR
 
 
 def _round(value: Any, digits: int = 4) -> Any:
@@ -52,6 +57,23 @@ def download_price_history(
     start: str | None = None,
     end: str | None = None,
 ) -> pd.DataFrame:
+    cache_payload = {
+        "ticker": ticker.upper(),
+        "period": period,
+        "start": start,
+        "end": end,
+        "interval": "1d",
+        "auto_adjust": False,
+    }
+    cache_key = hashlib.sha256(json.dumps(cache_payload, sort_keys=True).encode("utf-8")).hexdigest()
+    cache_disabled = os.getenv("SMU_MARKET_DATA_CACHE_DISABLED", "").strip().lower() in {"1", "true", "yes"}
+    cache_csv = MARKET_DATA_CACHE_DIR / f"{cache_key}.csv"
+    cache_meta = MARKET_DATA_CACHE_DIR / f"{cache_key}.json"
+    if not cache_disabled and cache_csv.exists():
+        cached = pd.read_csv(cache_csv, index_col=0, parse_dates=True)
+        if not cached.empty:
+            return cached.dropna(subset=["Close"]).copy()
+
     download_kwargs = {
         "tickers": ticker,
         "interval": "1d",
@@ -68,7 +90,26 @@ def download_price_history(
     history = yf.download(**download_kwargs)
     if isinstance(history.columns, pd.MultiIndex):
         history.columns = history.columns.get_level_values(0)
-    return history.dropna(subset=["Close"]).copy()
+    cleaned = history.dropna(subset=["Close"]).copy()
+    if not cache_disabled and not cleaned.empty:
+        MARKET_DATA_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cleaned.to_csv(cache_csv)
+        cache_meta.write_text(
+            json.dumps(
+                {
+                    "cache_key": cache_key,
+                    "payload": cache_payload,
+                    "rows": len(cleaned),
+                    "first_date": cleaned.index[0].date().isoformat(),
+                    "last_date": cleaned.index[-1].date().isoformat(),
+                    "csv_sha256": hashlib.sha256(cache_csv.read_bytes()).hexdigest(),
+                    "source": "yfinance",
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+    return cleaned
 
 
 def _coerce_as_of_date(as_of_date: str | date | datetime | None) -> pd.Timestamp | None:
