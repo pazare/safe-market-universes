@@ -1,7 +1,5 @@
 
-=======
 # StockTrader: Signals, Strategies, and Disagreement
-
 
 Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can an LLM's own expressed uncertainty ration a scarce human-review budget — spending it on the decisions where acting on corrupted evidence would be wrong?** It scores allocators by **regret against an oracle** that spends the same budget optimally (computed from hindsight utilities the model never sees), so the metric isolates the model, not the harness.
 
@@ -15,7 +13,7 @@ Regenerate every number and the figure from the logs (no model calls needed):
 
 ```bash
 python scripts/export_oversight_allocation.py   # -> report/oversight_allocation_results.{md,json} + figure
-python -m pytest tests/test_oversight_allocation.py   # 9 tests proving the metric (oracle optimality, regret>=0, ...)
+python -m pytest tests/test_oversight_allocation.py   # 11 tests proving the metric (oracle optimality, regret>=0, utility-free robustness)
 ```
 
 - Paper: [`report/submission_paper.md`](report/submission_paper.md) (PDF: `python report/build_latex_pdf.py`)
