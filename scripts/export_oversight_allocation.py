@@ -175,6 +175,22 @@ def render_markdown(headline: dict[str, Any], suite: dict[str, Any], per_seed: d
 
     lines += [
         "",
+        "## Robustness: 0/1 utility-free oracle (review-worthy iff committee majority wrong)",
+        "",
+        "Binary regret/step (lower is better) under an oracle that ignores utility magnitudes — confirms the ranking is not an artifact of the utility scale.",
+        "",
+        "| Allocator | " + " | ".join(f"K={b}" for b in headline["budgets"]) + " |",
+        "|" + " --- |" + " ---: |" * len(headline["budgets"]),
+    ]
+    for name in ("model_signal", "rule_baseline", "random"):
+        cells = " | ".join(
+            f"`{_fmt(headline['robustness_binary_oracle'][name][b]['mean_binary_regret_per_step'])}`"
+            for b in headline["budgets"]
+        )
+        lines.append(f"| {name} | {cells} |")
+
+    lines += [
+        "",
         "## Misspent-oversight decomposition (headline, model_signal)",
         "",
         "| Budget | Tokens spent | Overreach spends | Missed worthwhile | Overreach rate | Miss rate |",
