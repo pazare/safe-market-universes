@@ -6,7 +6,7 @@ This is a safety-evaluation artifact, not a trading system and not investment ad
 
 ### Key finding
 
-On the canonical run (120 episodes / 480 steps), the benchmark cleanly separates allocators. Regret per step at K=1 is **0.091** for a hand-coded evidence-integrity rule, **0.176** for the model's own confidence/verification signals, and **0.191** for random. The takeaway is decision-relevant: a model that is well calibrated on average (**committee ECE 0.102**) does not, on its own, concentrate scarce review on the steps that need it. **Calibration on average ≠ knowing where review should go** — exactly the gap to measure before triaging human oversight with model confidence. Stable across 3 seeds (range 0.004).
+On the canonical run (120 episodes / 480 steps), the benchmark cleanly separates allocators. Regret per step at K=1 is **0.091** for a hand-coded evidence-integrity rule, **0.176** for the model's own confidence/verification signals, and **0.191** for random. The takeaway is decision-relevant: a model that is well calibrated on average (**committee ECE 0.102**) does not, on its own, concentrate scarce review on the steps that need it. **Calibration on average ≠ knowing where review should go** — exactly the gap to measure before triaging human oversight with model confidence. Stable across 3 seeds (range 0.004). A utility-free robustness oracle confirms the model≈random conclusion and shows the hand-coded rule's edge is an artifact of the utility scale (it becomes the worst baseline once every committee error counts equally).
 
 Regenerate every number and the figure from the logs (no model calls needed):
 

@@ -19,6 +19,16 @@ The prior paper reported only the heuristic ECE, which measures the author's for
 | rule_baseline | `0.0911` (0.0726–0.1106) | `0.1143` (0.0909–0.1402) | `0.5522` | `0.5597` |
 | random | `0.1911` (0.1770–0.2058) | `0.3361` (0.3044–0.3681) | `0.4333` | `0.4375` |
 
+## Robustness: 0/1 utility-free oracle (review-worthy iff committee majority wrong)
+
+Binary regret/step (lower is better) under an oracle that ignores utility magnitudes — confirms the ranking is not an artifact of the utility scale.
+
+| Allocator | K=1 | K=2 |
+| --- | ---: | ---: |
+| model_signal | `0.0563` | `0.0938` |
+| rule_baseline | `0.0979` | `0.2000` |
+| random | `0.0646` | `0.0961` |
+
 ## Misspent-oversight decomposition (headline, model_signal)
 
 | Budget | Tokens spent | Overreach spends | Missed worthwhile | Overreach rate | Miss rate |

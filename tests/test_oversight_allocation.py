@@ -10,6 +10,7 @@ from src.benchmark.oversight_allocation import (
     build_oversight_allocation_report,
     committee_confidence_ece,
     episode_allocation_record,
+    episode_binary_regret_per_step,
     episode_utility,
     model_signal_score,
     oracle_score,
@@ -152,7 +153,28 @@ def test_report_structure_is_complete():
     assert set(report["allocators"]) == {"model_signal", "rule_baseline", "random"}
     assert "committee_confidence_ece" in report["calibration"]
     assert "heuristic_reliability_ece" in report["calibration"]
+    assert set(report["robustness_binary_oracle"]) == {"model_signal", "rule_baseline", "random"}
     for name in ("model_signal", "rule_baseline", "random"):
         for budget in (1, 2):
             cell = report["allocators"][name][budget]
             assert cell["regret_ci_lower"] <= cell["mean_regret_per_step"] <= cell["regret_ci_upper"] + 1e-9
+
+
+def test_binary_oracle_regret_nonnegative_and_covers_min():
+    steps = _toy_episode()["steps"]  # wrong-committee steps at idx 1,2 (relevant); idx 0 correct
+    # model_signal catches a relevant step at K=1 and both at K=2 -> regret 0 at each
+    assert episode_binary_regret_per_step(steps, model_signal_score, 1) == 0.0
+    assert episode_binary_regret_per_step(steps, model_signal_score, 2) == 0.0
+    # regret is never negative for any allocator/budget
+    for fn in (model_signal_score, rule_baseline_score, oracle_score):
+        for k in (1, 2, 3):
+            assert episode_binary_regret_per_step(steps, fn, k) >= -1e-9
+
+
+def test_binary_robustness_model_beats_random_utility_free():
+    report = build_oversight_allocation_report([_toy_episode()], budgets=(1,))
+    rb = report["robustness_binary_oracle"]
+    model = rb["model_signal"][1]["mean_binary_regret_per_step"]
+    random_regret = rb["random"][1]["mean_binary_regret_per_step"]
+    assert model == 0.0           # finds a review-worthy step without using utilities
+    assert model < random_regret  # ranking survives the utility-free objective
