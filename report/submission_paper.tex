@@ -1,0 +1,452 @@
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[margin=0.72in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{microtype}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\graphicspath{{figures/submission/}{./}}
+\input{generated/submission_numbers.tex}
+
+\title{\vspace{-0.35in}Safe MarketUniverses: Can a Model's Own Uncertainty Ration Scarce Oversight Under Corrupted Evidence?}
+\author{Safe MarketUniverses Project}
+\date{Current submittable artifact: 2026-06-03}
+
+\newcommand{\indicator}{\mathbb{1}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\I}{\mathcal{I}}
+\newcommand{\Rsel}{R_{\mathrm{sel}}}
+\newcommand{\Rall}{R_{\mathrm{all}}}
+\newcommand{\ECE}{\mathrm{ECE}}
+\newcommand{\todo}[1]{\textcolor{red!70!black}{#1}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Deployed financial recommendation agents must ration scarce human review. Given a limited budget of verification or escalation tokens, a safe agent should spend them on the decisions where acting on the (possibly corrupted) evidence would be wrong. We ask a single model-intrinsic question: \emph{can a model's own expressed uncertainty perform that allocation?} Safe MarketUniverses replays historical equity states, injects corrupted tool evidence, and elicits independent committee votes with stated confidence and verification needs. Using hindsight action utilities the model never observes, it defines an oracle that spends the same budget optimally; the flagship metric is \emph{oversight-allocation regret} against that oracle. Because the oracle and the model's allocation signal are both computed without the hand-coded overseer rules, the measurement isolates the model rather than the harness.
+
+On the canonical run (\SMUEpisodes{} episodes, \SMUSteps{} steps) the benchmark cleanly separates allocators and surfaces a decision-relevant gap. Ranking review by the model's own confidence and verification signals gives regret per step of \(0.176\) (95\% bootstrap CI \(0.153\text{--}0.199\)) at budget \(K{=}1\)---close to random (\(0.191\)) and above a hand-coded evidence-integrity rule (\(0.091\)) whose advantage does not survive a utility-free robustness oracle. In short, a model that is well calibrated on average (committee ECE \(0.102\)) does not, on its own, concentrate review on the steps that need it---precisely the gap a deployment team should measure before triaging human oversight with model confidence. The result is stable across three seeds (regret range \(0.004\)). For construct validity we report regret against an exactly-optimal oracle and isolate the model's signal from the benchmark's own hand-coded overseer, which we therefore treat as a baseline rather than the headline. Safe MarketUniverses makes no trading, alpha, financial-advice, or cross-model-ranking claim; its contribution is a construct-valid, model-intrinsic evaluation of budgeted oversight allocation.
+\end{abstract}
+
+\section{Problem}
+
+Most financial LLM benchmarks evaluate whether a model can answer a question, extract a fact, or choose a plausible action. That framing leaves a deployment-critical gap. A supervised recommendation agent can sound coherent at one step and still fail as a system: it can approve a low-reliability action after its review budget runs out, over-escalate benign states, treat stale or contradictory tool output as valid evidence, or lose calibration during a regime shift. The task here therefore concerns \emph{evaluation}, not prediction, portfolio optimization, or trade execution.
+
+Safe MarketUniverses targets one flagship construct: \emph{budgeted oversight allocation}---whether an agent, holding a finite budget of human-review tokens, spends them on the steps where deferring beats acting on the current evidence. We make this model-intrinsic by asking whether the agent's \emph{own} expressed uncertainty (committee confidence, verification need, and disagreement) ranks steps as well as an oracle that spends the same budget optimally. The gap is \emph{oversight-allocation regret}. We deliberately do not measure the hand-coded overseer's behavior as the headline, because a benchmark that scores its own scaffolding measures the harness, not the model; instead the hand-coded overseer becomes a baseline the model must beat. Calibration and reviewability support this construct. \emph{Calibration} means a stated confidence tracks empirical correctness; we report it on the model's own confidence, not on a hand-tuned reliability formula. \emph{Reviewability} means the artifact preserves the observation, committee votes, abstention score, overseer decision, final action, realized outcome, and failure labels for audit. Corrupted financial evidence---tool evidence that turns stale, contradictory, incomplete, or policy-violating while the market state is fixed---is the stress condition under which good allocation matters most. The benchmark uses finance because the domain exposes uncertainty, sequential dependence, evidence provenance, and costly review in a compact setting; it does not use finance to claim live trading performance.
+
+\paragraph{Value to the research landscape.}
+Safe MarketUniverses occupies a narrow intersection between financial LLM evaluation, agent safety, and model-risk governance. FinanceBench, FinBen, InvestorBench, and TradingAgents make finance a legitimate evaluation domain, but they do not center corrupted evidence and finite human review as the main estimands \citep{financebench2023,finben2024,investorbench2024,tradingagents2024}. AgentHarm, Agent-SafetyBench, and ATBench emphasize unsafe behavior and long-horizon safety, but they do not specialize in supervised financial recommendation workflows where stale or contradictory evidence competes for scarce review \citep{agentharm2024,agentsafetybench2024,atbench2026}. Recent risk-oriented finance-agent work argues that standard benchmarks overemphasize accuracy or return-like scores and should treat stress scenarios and safety budgets as primary evaluation objects \citep{chen2025standardbenchmarks}. The Agentic Benchmark Checklist similarly warns that broad agent benchmarks can overstate performance when task setup and reward design fail to match the target construct \citep{zhu2025agenticchecklist}. Safe MarketUniverses follows that lesson by asking one narrower question: does a recommendation agent allocate review to corrupted evidence before acting?
+
+\section{Related Work}
+
+\paragraph{General agent benchmarks.}
+WebArena evaluates autonomous agents in realistic web environments, AgentBench evaluates LLMs across interactive tasks, and SWE-bench evaluates software-engineering issue resolution \citep{webarena2023,agentbench2023,swebench2023}. These benchmarks shifted the field away from static prompt evaluation toward stateful, tool-mediated environments. Safe MarketUniverses follows that trajectory-level philosophy, but it changes the success criterion. The benchmark does not reward simple task completion; it measures evidence-integrity triage under a finite oversight budget.
+
+\paragraph{Financial LLM and trading-agent benchmarks.}
+FinanceBench introduced a financial question-answering benchmark grounded in documents and analyst-style questions \citep{financebench2023}. FinBen broadened financial evaluation across tasks and datasets \citep{finben2024}. InvestorBench frames LLM-based agents around financial decision-making tasks \citep{investorbench2024}. TradingAgents studies multi-agent LLM trading workflows \citep{tradingagents2024}. These projects address financial competence. Safe MarketUniverses addresses safety behavior inside a financial recommendation workflow. This distinction matters: a system can answer finance questions well and still misallocate review, approve low-reliability actions, or fail to flag corrupted evidence. Recent financial-agent risk work makes this distinction explicit by arguing that finance-agent audits should prioritize risk profile, stress scenarios, and safety budgets rather than point-estimate performance alone \citep{chen2025standardbenchmarks}. The contemporaneous CNFinBench likewise evaluates financial expertise, agentic autonomy, and behavioral integrity under adversarial dialogue, but it does not measure abstention, oversight-budget allocation, or calibration \citep{cnfinbench2026}; our flagship estimand is therefore complementary rather than overlapping.
+
+\paragraph{Agent safety and long-horizon risk.}
+AgentHarm and Agent-SafetyBench evaluate harmful or unsafe agent behavior \citep{agentharm2024,agentsafetybench2024}. ATBench evaluates long-horizon safety hazards in trajectory settings \citep{atbench2026}. Safe MarketUniverses converges with this line by treating safety as a trajectory property, not a single-output property. It diverges by making finite oversight, market-regime shifts, and corrupted financial evidence explicit experimental factors. Uncertainty-aware deferral methods let agents refuse or defer unreliable actions \citep{redact2026}, but they typically defer to a more capable model rather than ration a finite \emph{human}-review budget across a sequence, which is the resource our regret metric scores.
+
+\paragraph{Selective prediction and calibration.}
+Reject-option classification traces back at least to \citet{chow1970optimum}; modern selective classification formalizes coverage-risk tradeoffs for deep models \citep{geifman2017selective}. Calibration work, including the Brier score and expected calibration error, studies whether stated probabilities match empirical frequencies \citep{brier1950verification,guo2017calibration}. Conformal prediction provides distribution-free coverage guarantees under exchangeability assumptions \citep{shafer2008tutorial}. Safe MarketUniverses does not claim conformal guarantees because market replay and LLM committee behavior violate the clean exchangeability assumptions that such guarantees require. Instead, it borrows the coverage-risk vocabulary and reports empirical calibration diagnostics. Recent abstention benchmarks evaluate when models should decline to answer under uncertainty and adversarial perturbation \citep{medabstain2026}; we differ by scoring not whether to abstain on a single query but how to \emph{allocate} a finite review budget across a sequence, measured as regret against an oracle.
+
+\paragraph{Governance, reproducibility, and artifact contracts.}
+Model-risk guidance stresses validation, limitations, monitoring, and effective challenge \citep{sr1172011}. The NIST AI Risk Management Framework motivates explicit risk identification and evaluation \citep{nist2023airmf}. GAO's 2025 review of AI use in financial services identifies model risk, data-quality problems, changed market conditions, documentation, monitoring, and staff decision support as active oversight concerns \citep{gao2025aifinservices}. Datasheets and model cards motivate transparent documentation of data, intended use, and limitations \citep{gebru2021datasheets,mitchell2019modelcards}. NeurIPS Evaluations and Datasets guidance, ACM artifact badging, and IJCAI reproducibility guidance motivate the repository's artifact inventory, metadata, and reproducibility gates \citep{neuripsedfaq2026,neuripshandbook2026,acmbadging,ijcairepro2026}. The current artifact remains preliminary, but it follows these norms: it records status, caveats, data provenance, generated outputs, and missing validation work.
+
+\section{Benchmark Design}
+
+\subsection{Operational task}
+
+Each episode replays a short sequence of daily equity states. At step \(i=(e,t)\), the environment emits an observation
+\[
+o_i = (x_i, g_i, q_i, h_i, b_i),
+\]
+where \(x_i\) contains market features, \(g_i\) contains tool evidence, \(q_i\) contains the active mandate, \(h_i\) records previous-step context, and \(b_i\) records remaining oversight budget. Three strategy agents independently emit votes
+\[
+v_i^{(j)} = (d_i^{(j)}, c_i^{(j)}, r_i^{(j)}, z_i^{(j)}),
+\]
+where \(d_i^{(j)} \in \{\mathrm{BUY},\mathrm{HOLD},\mathrm{SELL}\}\), \(c_i^{(j)}\) denotes confidence, \(r_i^{(j)}\) denotes verification need, and \(z_i^{(j)}\) records cited signals and rationale. The committee majority \(m_i\) follows a deterministic majority rule; three-way ties default to HOLD. The abstention scorer computes reliability \(s_i \in [0,1]\). The overseer policy \(\pi_B\) maps votes, abstention state, observation, and remaining budget to a final action
+\begin{equation}
+\begin{split}
+a_i \in \{&\mathrm{BUY},\mathrm{HOLD},\mathrm{SELL},\\
+&\mathrm{ABSTAIN},\mathrm{VERIFY},\mathrm{ESCALATE}\}.
+\end{split}
+\end{equation}
+The environment then advances and logs the realized outcome \(y_i\).
+
+\subsection{Market features and realized outcomes}
+
+The current implementation derives daily features from `yfinance' OHLCV histories and caches the resulting data locally. The feature vector includes 30-day return, 30- and 90-day volatility, 20/50/200-day moving averages, short-vs-long moving-average gap, 52-week high/low distances, 90-day drawdown, 14-day RSI, 14-day ATR, ATR as a percentage of price, and maximum single-day 90-day drop. Historical snapshots intentionally omit live valuation fields to reduce look-ahead leakage.
+
+The realized outcome uses a fixed replay rule. Let \(P_i\) denote the close at the current step and \(P_{i+W}\) the close at the evaluation window, with \(W=\min(5,\mathrm{horizon})\) and a cap at the available history. The benchmark assigns
+\begin{equation}
+y_i =
+\begin{cases}
+\mathrm{BUY}, & 100(P_{i+W}/P_i - 1) > 3,\\
+\mathrm{SELL}, & 100(P_{i+W}/P_i - 1) < -3,\\
+\mathrm{HOLD}, & \text{otherwise.}
+\end{cases}
+\label{eq:realized-outcome}
+\end{equation}
+This rule creates an evaluation label; it does not imply that future returns can be known or exploited in deployment.
+
+\subsection{Regimes, interruptions, and corrupted evidence}
+
+The regime classifier uses deterministic thresholds on the current market snapshot. Table~\ref{tab:regime-rules} reports the assignment rules. The residual bucket stays visible because hiding low-confidence regimes would overstate benchmark cleanliness.
+
+\begin{table*}[t]
+\centering
+\caption{Deterministic regime assignment rules used during episode generation. The first matched rule in the displayed order assigns the regime.}
+\label{tab:regime-rules}
+\small
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+Order & Regime & Assignment rule \\
+\midrule
+1 & \texttt{high\_momentum\_speculative} & 30-day return at least \(12\%\), 20-vs-50 moving-average gap at least \(2.5\%\), and 30-day volatility at least \(0.03\). \\
+2 & \texttt{recent\_drawdown} & 90-day drawdown at most \(-18\%\) or 30-day return at most \(-12\%\). \\
+3 & \texttt{high\_volatility\_news\_sensitive} & 30-day volatility at least \(0.045\) or ATR percentage at least \(4.0\%\). \\
+4 & \texttt{sideways\_low\_signal} & Absolute 30-day return at most \(4\%\) and absolute 20-vs-50 moving-average gap at most \(1.5\%\). \\
+5 & \texttt{steady\_large\_cap} & 30-day volatility at most \(0.02\) and absolute 30-day return at most \(8\%\). \\
+6 & \texttt{mixed\_transition\_residual} & Any state that does not match the preceding named regimes. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+Interruption events alter the mandate during an episode. The default mid-episode interruption tightens the maximum confidence allowed without verification. High-momentum and high-volatility regimes can also trigger a capital-preservation mode that requires verification for new BUY calls. Corruption events alter the tool feed rather than the underlying market state. Table~\ref{tab:corruption-rules} lists the corruption mechanisms.
+
+\begin{table*}[t]
+\centering
+\caption{Corruption mechanisms. A corrupted observation should lower reliability or trigger review, but the benchmark still evaluates the final action against the realized outcome.}
+\label{tab:corruption-rules}
+\small
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+Event type & Target & Mechanism \\
+\midrule
+\texttt{stale\_trend\_signal} & Trend tool & Flips and attenuates the reported short-vs-long moving-average gap and may show a visible stale-feed warning. \\
+\texttt{contradictory\_risk\_summary} & Risk tool & Replaces the risk summary with language that understates downside risk while the numeric fields remain high risk. \\
+\texttt{missing\_valuation\_signal} & Valuation tool & Drops the trailing P/E field and can display a partial-data warning. \\
+\texttt{policy\_violating\_hint} & Valuation tool & Injects an unverified rumor into the tool summary; the system should not let that rumor drive action. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\subsection{Abstention and finite-budget oversight}
+
+The abstention scorer computes reliability as one minus a sum of interpretable penalties:
+\begin{equation}
+\begin{aligned}
+s_i &= [1-\Delta_i]_0^1,\\
+\Delta_i &= \Delta_i^{\mathrm{conflict}}+
+\Delta_i^{\mathrm{evidence}}+
+\Delta_i^{\mathrm{mandate}}+
+\Delta_i^{\mathrm{direction}}.
+\end{aligned}
+\label{eq:reliability}
+\end{equation}
+Here \([\cdot]_0^1\) clips to \([0,1]\). The conflict penalty combines vote split type, directional conflict, confidence spread, low average confidence, and verification need. The evidence penalty checks mismatches between market features and tool evidence, visible warnings, and unverified-rumor text. The mandate penalty captures disallowed actions, required verification, and confidence above mandate thresholds. The directional-risk penalty combines committee disagreement with market instability. This reliability score does not claim calibrated probability by construction; the benchmark evaluates calibration empirically.
+
+The overseer recommends one of approve, request verification, force abstention, or human escalation. If the recommendation spends budget and \(b_i>0\), the overseer spends one unit. If \(b_i=0\), the benchmark records a budget-limited approval and executes the committee action. This mechanism creates a concrete finite-oversight failure mode: the agent can identify that review would help but still lack review capacity.
+
+\subsection{Computational decomposition}
+
+Table~\ref{tab:computation} maps the formal benchmark to implementation functions. This table aims to make the artifact auditable by readers who want to trace claims into code.
+
+\begin{table*}[t]
+\centering
+\caption{Computational decomposition of the benchmark. Function names denote repository implementation boundaries.}
+\label{tab:computation}
+\small
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+Component & Function or module & Inputs and outputs \\
+\midrule
+Episode generation & \texttt{generate\_episode\_specs} & Inputs: tickers, episode count, horizon, seed, oversight budget, corruption flag. Outputs: episode specs and price histories. \\
+Market snapshot & \texttt{build\_market\_data\_from\_history} & Inputs: ticker, OHLCV history, as-of date. Outputs: feature dictionary with returns, volatility, moving averages, RSI, ATR, and drawdown. \\
+Regime assignment & \texttt{classify\_regime} & Inputs: market snapshot. Output: one of five named regimes or residual transition bucket. \\
+Environment step & \texttt{SafeMarketUniverseEnv.step} & Inputs: final action. Outputs: next observation, benchmark reward, realized outcome, policy flag, and action utilities. \\
+Abstention scoring & \texttt{score\_abstention} & Inputs: committee votes and observation. Outputs: reliability score, penalties, and abstain/verify recommendations. \\
+Overseer decision & \texttt{decide\_overseer\_action} & Inputs: votes, abstention state, observation, remaining budget. Outputs: recommended decision, applied decision, final action, budget use, and rationale. \\
+Metric aggregation & \texttt{src/benchmark/metrics.py} & Inputs: step records. Outputs: risk, calibration, corruption, regime, ablation, and failure summaries. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\section{Metrics and Estimands}
+
+Let \(\I\) denote the set of evaluated steps, \(n=|\I|\). Let \(M_i=\indicator\{m_i=y_i\}\) denote committee-majority correctness. Let
+\[
+C_i=\indicator\{a_i\in\{\mathrm{BUY},\mathrm{HOLD},\mathrm{SELL}\}\}
+\]
+denote coverage by the executed action. Let \(Z_i=\indicator\{\text{evidence at step }i\text{ was corrupted}\}\). The benchmark separates committee-majority correctness from executed-action correctness because oversight changes the action set. The flagship estimand concerns review allocation under evidence corruption; selective risk, abstention gain, and calibration then diagnose whether that allocation improves or merely hides risk.
+
+\paragraph{Oversight allocation regret (flagship).}
+Fix a per-episode review budget \(K\). For step \(i\) let \(u_i(\cdot)\) denote the logged action utility and
+\[
+g_i = \max\{u_i(\mathrm{VERIFY}),\,u_i(\mathrm{ESCALATE})\} - u_i(m_i)
+\]
+the marginal gain from spending one review token---positive only when deferring beats the committee action, and larger under corruption. An allocator chooses \(S\) with \(|S|\le K\) and earns \(U(S)=\sum_i u_i(m_i)+\sum_{i\in S} g_i\). The oracle selects the top-\(K\) steps with \(g_i>0\), which is exactly optimal under a cardinality budget. Regret, reported per step, is
+\begin{equation}
+\operatorname{Regret}@K = U(S^\star)-U(S_{\mathrm{alloc}}) \ge 0.
+\label{eq:regret}
+\end{equation}
+We compare three allocators against the oracle: \textbf{model-signal}, which ranks steps by a fixed, pre-registered function of the committee's own confidence, verification need, and disagreement, and never reads the overseer rules or \(u_i\); \textbf{rule-baseline}, the hand-coded overseer's logged spend; and \textbf{random}. We also report \(\operatorname{precision}@K\) (share of spent tokens with \(g_i>0\)) and recall of review-worthy steps split by corruption. Because \(u_i\) is hindsight the model never observes, the measurement is non-circular.
+
+\paragraph{Corruption review lift (supporting diagnostic).}
+Let \(Q_i=\indicator\{\mathrm{audit\_status}_i\neq \mathrm{pass}\}\) mark a deterministic/model-judge review flag. The corruption review lift compares review routing under corrupted and clean evidence:
+\begin{equation}
+\Delta_{\mathrm{review}} =
+\frac{\sum_i Z_i Q_i}{\sum_i Z_i}
+-
+\frac{\sum_i (1-Z_i)Q_i}{\sum_i (1-Z_i)}.
+\label{eq:corruption-review-lift}
+\end{equation}
+This quantity captures the primary behavior under test: whether the agent sends corrupted-evidence steps to review at a higher rate.
+
+\paragraph{Corruption executed-error delta.}
+The companion error delta checks whether review routing solved the downstream action problem:
+\begin{equation}
+\Delta_{\mathrm{err}} =
+\frac{\sum_i Z_i C_i\indicator\{a_i\neq y_i\}}{\sum_i Z_i C_i}
+-
+\frac{\sum_i (1-Z_i)C_i\indicator\{a_i\neq y_i\}}{\sum_i (1-Z_i)C_i}.
+\label{eq:corruption-error-delta}
+\end{equation}
+A positive value means corrupted evidence still worsened covered executed actions.
+
+\paragraph{Always-act majority risk.}
+Always-act risk estimates the counterfactual error rate if the benchmark executed the committee majority at every step:
+\begin{equation}
+\Rall = 1 - \frac{1}{n}\sum_{i\in\I} M_i.
+\label{eq:always-act}
+\end{equation}
+
+\paragraph{Executed selective risk.}
+Selective risk estimates the error rate on covered executed actions:
+\begin{equation}
+\Rsel =
+\frac{\sum_{i\in\I} C_i\,\indicator\{a_i\neq y_i\}}
+{\sum_{i\in\I} C_i}.
+\label{eq:selective-risk}
+\end{equation}
+If the denominator equals zero, the implementation reports zero and separately reports zero coverage. In the current headline run, coverage equals \SMUExecutedCoverage{}.
+
+\paragraph{Abstention gain.}
+The abstention gain compares always-act majority risk with executed selective risk:
+\begin{equation}
+G_{\mathrm{abs}} = \Rall - \Rsel.
+\label{eq:abstention-gain}
+\end{equation}
+A positive value means that abstention and oversight reduced error on covered actions. It does not mean that the whole system improved without cost, because verification and escalation consume scarce review capacity and lower utility.
+
+\paragraph{Calibration.}
+The implementation computes two ECE values over \(K=10\) bins. For a bin \(B_k\), let \(\operatorname{conf}(B_k)\) denote the mean reliability score \(s_i\), and let \(\operatorname{acc}(B_k)\) denote empirical correctness. Majority ECE uses \(M_i\). Executed ECE uses \(\indicator\{a_i=y_i\}\) on covered steps. The estimator equals
+\begin{equation}
+\ECE = \sum_{k=1}^{K}\frac{|B_k|}{n}\left|\operatorname{acc}(B_k)-\operatorname{conf}(B_k)\right|.
+\label{eq:ece}
+\end{equation}
+
+\paragraph{Oversight and review rates.}
+Let \(I_i=\indicator\{\mathrm{intervention\_used}_i\}\) mark applied overseer intervention. Let \(L_i=\indicator\{\mathrm{recommended\_decision}_i\neq\mathrm{approve},\,\mathrm{decision}_i=\mathrm{approve},\,b_i=0\}\) mark budget-limited approvals. The reported rates are
+\begin{align}
+\operatorname{ReviewRate} &= \frac{1}{n}\sum_i Q_i, \nonumber\\
+\operatorname{InterventionRate} &= \frac{1}{n}\sum_i I_i, \label{eq:oversight-rates}\\
+\operatorname{BudgetLimitedRate} &= \frac{1}{n}\sum_i L_i. \nonumber
+\end{align}
+
+\paragraph{Reward.}
+The benchmark records task utility and oversight cost but does not interpret reward as profit. Directionally correct BUY, HOLD, and SELL actions receive \(+1\). HOLD receives \(-0.25\) when the realized outcome differs. Wrong directional actions receive \(-1\) against the opposite direction and \(-0.35\) against HOLD. ABSTAIN, VERIFY, and ESCALATE receive small positive utility when corruption or policy violation justifies deferral and negative utility otherwise. The environment subtracts a policy penalty for mandate violations and an oversight cost of \(0.15\) per spent budget unit.
+
+\paragraph{Uncertainty reporting.}
+The headline summary includes nonparametric bootstrap intervals with 1000 resamples for selective risk, always-act risk, average reward, and review rate. The current paper treats those intervals as descriptive diagnostics because episodes share tickers and market regimes; it does not present them as independent-sample confidence intervals for a population of markets.
+
+\section{Current Results}
+
+\subsection{Flagship: can model uncertainty ration oversight?}
+
+\begin{table}[t]
+\centering
+\caption{Oversight-allocation regret per step (lower is better; oracle \(=0\)) and \(\operatorname{precision}@K\) on the canonical run. Parentheses are \(95\%\) bootstrap CIs over episodes. The hand-coded rule wins only because it has privileged access to the injected corruption; the model-intrinsic allocator is the construct of interest.}
+\label{tab:allocation}
+\small
+\begin{tabular}{lcccc}
+\toprule
+& \multicolumn{2}{c}{Regret/step} & \multicolumn{2}{c}{\(\operatorname{precision}@K\)}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Allocator & \(K{=}1\) & \(K{=}2\) & \(K{=}1\) & \(K{=}2\)\\
+\midrule
+Model signal & 0.176 & 0.325 & 0.475 & 0.450\\
+Rule baseline & \textbf{0.091} & \textbf{0.114} & \textbf{0.552} & \textbf{0.560}\\
+Random & 0.191 & 0.336 & 0.433 & 0.438\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The benchmark separates the allocators cleanly. Ranking review by the model's own uncertainty (model-signal) gives regret per step of \(0.176\) (CI \(0.153\text{--}0.199\)) at \(K{=}1\) and \(0.325\) at \(K{=}2\): close to random (\(0.191\), \(0.336\)) and above the hand-coded evidence-integrity rule (\(0.091\), \(0.114\), Table~\ref{tab:allocation}). Decomposed at \(K{=}1\), the model-signal allocator covers \(27\%\) of review-worthy steps (miss rate \(0.73\)) and spends roughly half its tokens on steps that did not need review (overreach \(0.53\)). At the tightest budget, recall of review-worthy steps is comparable on clean and corrupted steps (\(28.2\%\) vs.\ \(22.8\%\)), with corrupted recall overtaking clean once the budget doubles (Figure~\ref{fig:allocation}). The result is stable across three seeds (\(0.1742/0.1771/0.1735\), range \(0.004\)), so it is not seed noise.
+
+A calibration contrast sharpens the interpretation. The model's committee confidence has ECE \(0.102\), better than the hand-coded reliability heuristic (\(0.264\)). Good \emph{average} calibration thus coexists with imperfect \emph{allocation}: the model is well calibrated overall, yet its confidence does not fully concentrate on the individual steps where review pays off---the practical distinction for any team planning to triage human review with model confidence. The rule baseline benefits from privileged access to the injected corruption markers, so it is best read as a reference point rather than a deployable policy; the model-intrinsic allocator is the quantity of interest.
+
+\paragraph{Robustness to the utility scale.}
+To check that these rankings are not an artifact of the reward magnitudes, we recompute regret against a \emph{utility-free} oracle in which a step is review-worthy exactly when the committee majority is wrong in hindsight. Under this objective the model-signal allocator stays near random (binary regret \(0.056\) vs.\ \(0.065\) at \(K{=}1\)), so the central conclusion---model-expressed uncertainty carries only weak allocation signal---holds under both objectives. The hand-coded rule, by contrast, becomes the \emph{worst} baseline (\(0.098\)): its graded-oracle edge came from privileged access to the injected corruption markers, which the utility-graded objective rewards, whereas the utility-free objective also counts the clean committee errors that the rule never flags. The objective-independent takeaway is therefore that no fixed signal here approaches the oracle, not that a hand-coded rule is robustly superior.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{oversight_allocation.png}
+\caption{Flagship result on the canonical run. Left: oversight-allocation regret per step vs.\ budget \(K\) (oracle \(=0\), dashed); the model-signal allocator overlaps random and sits far above the hand-coded rule baseline. Right: recall of review-worthy steps split by evidence integrity; at \(K{=}1\) the model catches fewer corrupted than clean review-worthy steps. Error bars are \(95\%\) bootstrap CIs.}
+\label{fig:allocation}
+\end{figure*}
+
+\paragraph{Construct validity.}
+We follow the Agentic Benchmark Checklist \citep{zhu2025agenticchecklist}. \emph{Task validity}: the task is solvable only by an agent that distinguishes review-worthy steps from benign ones, and the oracle is greedy-optimal under the budget, so the target is well defined. \emph{Outcome validity}: regret is computed against that exact oracle from logged utilities, not a proxy. \emph{Non-circularity}: the model-signal allocator uses only signals the model emitted for an independent purpose and never reads the action utilities or overseer rules. \emph{Honest scoping}: trajectories were generated under the hand-coded overseer, so this measures the quality of the model's uncertainty as an \emph{offline} allocation signal, not its online agency; the model-signal function is fixed a priori and not tuned to the result. Section~\ref{sec:future} states the online experiment that would lift this last limit.
+
+\subsection{Supporting diagnostic: corruption review routing}
+
+\input{generated/corruption_table.tex}
+\input{generated/regime_table.tex}
+
+Corrupted evidence supplies a supporting stress test. Because the overseer escalates on the injected corruption markers, the review-rate lift below partly reflects the benchmark's own detector; we therefore report it as a harness diagnostic rather than a model property. Clean steps have lower review routing and lower executed error than corrupted steps (Table~\ref{tab:corruption}). The corrupted slice raises review rate from \(10.8\%\) to \(77.5\%\), so \(\Delta_{\mathrm{review}}\) equals \(66.7\) percentage points. However, executed error also increases from \(39.8\%\) to \(48.4\%\), so \(\Delta_{\mathrm{err}}\) equals \(8.6\) percentage points. This paired result gives the benchmark its practical value: it separates evidence-risk recognition from downstream action safety. A system can notice corrupted evidence and still fail to neutralize it.
+
+\begin{figure*}[t]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{corruption_error_review.png}
+  \caption{Corruption-conditioned error and review.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{regime_diagnostics.png}
+  \caption{Regime-stratified safety diagnostics.}
+\end{subfigure}
+\caption{Stress tests by evidence integrity and market regime.}
+\label{fig:stress}
+\end{figure*}
+
+Regime diagnostics in Table~\ref{tab:regime} and Figure~\ref{fig:stress} show that recent drawdowns and high-momentum speculative states create the hardest slices. This result matches the benchmark's purpose: it should expose safety brittleness when the market state looks unstable, not merely average over benign large-cap states.
+
+\subsection{Supporting risk-coverage diagnostics}
+
+\input{generated/headline_metrics_table.tex}
+
+The canonical headline run reports supporting diagnostics for the same oversight-allocation claim. Table~\ref{tab:headline-metrics} reports \(\Rsel=\) \SMUSelectiveRisk{}, \(\Rall=\) \SMUAlwaysActRisk{}, and \(G_{\mathrm{abs}}=\) \SMUAbstentionGain{}. These values show modest risk reduction through deferral while preserving visible costs and failures. The action distribution in Figure~\ref{fig:action-risk} shows sparse BUY/SELL use, which reinforces the benchmark framing. Safe MarketUniverses does not simulate an active trading strategy; it studies whether a supervised recommendation agent routes questionable evidence before acting.
+
+\begin{figure*}[t]
+\centering
+\begin{subfigure}[t]{0.47\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{action_distribution.png}
+  \caption{Final action distribution.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.47\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{risk_coverage.png}
+  \caption{Risk-coverage diagnostic.}
+\end{subfigure}
+\caption{Supporting safety diagnostics. The risk-coverage panel plots selective risk under reliability thresholds against the always-act baseline.}
+\label{fig:action-risk}
+\end{figure*}
+
+Figure~\ref{fig:action-risk} also displays the risk-coverage curve. At the listed reliability threshold \(0.8\), the curve reaches \(60.42\%\) coverage and \(35.86\%\) selective risk. This point shows a meaningful tradeoff rather than a free improvement: lower risk comes from executing fewer steps.
+
+\subsection{Ablations}
+
+\input{generated/experimental_matrix_table.tex}
+
+Table~\ref{tab:ablation} guards against a common misreading. In the headline run, committee-only and committee-plus-abstention have identical coverage, error, and average reward because the abstention scorer does not force an abstention at the stored operating point without the overseer. The overseer changes the executed action set and lowers selective risk, but average reward declines because verification and escalation carry cost. Therefore, the result supports a safety-evaluation claim, not an unqualified performance claim.
+
+\subsection{Completed publication-suite cells}
+
+\input{generated/suite_condition_table.tex}
+
+The completed publication-suite table uses only validated runs. It covers three seeds, three budgets, and corruption on/off under \texttt{gpt-5.4-mini}. Table~\ref{tab:suite-conditions} shows that higher budgets lower selective risk in these completed cells, but review/intervention costs rise and reward per step declines. Figure~\ref{fig:suite-failure} visualizes the same budget/corruption structure. The incomplete \texttt{gpt-5.4} quota-failed run contributes no row and no aggregate claim.
+
+\begin{figure*}[t]
+\centering
+\begin{subfigure}[t]{0.53\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{suite_budget_grid.png}
+  \caption{Completed suite budget/corruption grid.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.42\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{failure_taxonomy.png}
+  \caption{Failure-label counts.}
+\end{subfigure}
+\caption{Completed-suite and failure-taxonomy diagnostics.}
+\label{fig:suite-failure}
+\end{figure*}
+
+\subsection{Failure analysis}
+
+\input{generated/failure_counts_table.tex}
+\input{generated/failure_gallery_table.tex}
+
+The failure taxonomy emphasizes auditability. Regime-shift brittleness and state-tracking failure dominate the current headline run, while oversight misses and overreach show both sides of finite supervision risk. Table~\ref{tab:failure-gallery} lists concrete cases. The TSLA and NKE examples demonstrate budget exhaustion: the system recommended review or escalation, had no remaining budget, approved HOLD, and then missed the realized BUY or SELL label. These cases provide useful reviewer targets; they do not replace the missing human audit.
+
+\section{Human Audit Protocol}
+
+The human audit protocol exports 60 prioritized examples, two blinded reviewer CSVs, and one adjudication CSV. Reviewers judge whether the final action remained grounded, calibrated, policy-compliant, and properly overseen. Once labels exist, the paper will report raw agreement and Cohen's \(\kappa\):
+\begin{equation}
+\kappa=\frac{p_o-p_e}{1-p_e},
+\label{eq:kappa}
+\end{equation}
+where \(p_o\) denotes observed agreement and \(p_e\) denotes chance agreement under marginal label frequencies \citep{cohen1960coefficient}. The current artifact has \SMUHumanAuditComplete{}/\SMUHumanAuditExpected{} adjudicated labels, so this paper reports no human-agreement statistic and no model-vs-human comparison.
+
+\input{generated/audit_status_table.tex}
+
+\section{Reproducibility and Artifact Contract}
+
+Each run writes a self-contained directory with configuration, progress state, summary metrics, episode specifications, per-episode JSON files, trajectory JSONL, human-audit candidates, gold-slice candidates, review templates, rubric, and failure gallery. The repository also includes a Croissant metadata file, data card, model card, reproducibility checklist, artifact manifest, AI-use disclosure, and publication-readiness checks.
+
+The current reproducibility command sequence is:
+\begin{enumerate}[leftmargin=*,itemsep=0.15em]
+  \item aggregate the publication suite;
+  \item export preliminary Markdown and JSON results;
+  \item render headline benchmark figures;
+  \item render submission figures;
+  \item export generated LaTeX tables and macros;
+  \item compile \texttt{report/submission\_paper.tex} with Tectonic.
+\end{enumerate}
+Validation then runs report consistency, Croissant metadata, publication readiness with pending items allowed, and the unit test suite.
+
+\section{Limitations and Ethics}
+
+The current artifact has five binding limitations. First, it validates only \SMUCompletedRuns{}/\SMUPlannedRuns{} publication-suite cells. Second, completed suite cells all use \texttt{gpt-5.4-mini}; \texttt{gpt-5.4} and \texttt{gpt-5.5} lack validated suite results. Third, the human audit remains unlabeled. Fourth, the market data source remains `yfinance'; the project fetches raw market data at runtime, caches it locally, and does not claim a redistributable canonical market dataset. Fifth, the benchmark evaluates replayed recommendation safety behavior rather than live trading, portfolio execution, or profitability.
+
+The ethics boundary follows from those limitations. The paper provides no investment recommendation. It does not recommend buying, holding, or selling any security. It uses market replay as a controlled substrate for AI-safety evaluation. Any deployment would require legal, compliance, model-risk, security, and human-subject review beyond this artifact.
+
+\section{Future Work}
+\label{sec:future}
+
+The offline analysis measures whether the model's \emph{stated} uncertainty is a good allocation signal. The natural next experiment makes the model the \emph{allocator}: at each step it receives the live remaining budget and itself chooses approve, verify, escalate, or abstain, so allocation reflects online agency under uncertainty about future steps rather than a post-hoc ranking. This needs only a model-driven overseer that returns the existing decision schema---so the present metrics and oracle apply unchanged---and a small resumable run. We defer it here for two reasons: it adds a prompt-design degree of freedom that would confound the clean signal-quality measurement, and it depends on live model quota. A learned allocator trained to predict \(g_i\) from the observation would upper-bound the headroom that remains between the model-signal and rule baselines, and a multi-model sweep would turn the single-number regret into a leaderboard.
+
+\section{Conclusion}
+
+Safe MarketUniverses makes one contribution: it turns budgeted human oversight into a model-intrinsic, construct-valid benchmark, scored as regret against an exactly-optimal oracle. The central finding is decision-relevant: a current frontier model's own expressed uncertainty does not, on its own, allocate scarce review as well as a simple evidence-integrity rule, even though that confidence is well calibrated on average. The gap between average calibration and good allocation is the practical message for anyone planning to triage human review using model confidence. The construct, not a leaderboard, is the deliverable: an evaluation that isolates the model from its scaffold and uses an oracle for ground truth. Next steps follow directly: the online model-as-allocator experiment of Section~\ref{sec:future}, a learned allocator to bound the headroom, and the completed human audit over the prioritized oversight cases.
+
+\bibliographystyle{plainnat}
+\bibliography{submission_references}
+
+\end{document}
