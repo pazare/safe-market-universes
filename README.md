@@ -1,49 +1,201 @@
+
+=======
 # StockTrader: Signals, Strategies, and Disagreement
 
-This project implements the assignment as a LangGraph workflow grounded in real Yahoo Finance market data. The base system compares two distinct LLM-powered strategies on the same stock snapshot and routes their outputs through an evaluator. The bonus implementation extends that core with:
 
-- a third strategy agent
-- disagreement-triggered debate mode
-- a historical backtest scorecard in `outputs/backtest.json`
+Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can an LLM's own expressed uncertainty ration a scarce human-review budget — spending it on the decisions where acting on corrupted evidence would be wrong?** It scores allocators by **regret against an oracle** that spends the same budget optimally (computed from hindsight utilities the model never sees), so the metric isolates the model, not the harness.
 
-## Strategy lineup
+This is a safety-evaluation artifact, not a trading system and not investment advice. Finance is the testbed because evidence integrity, uncertainty, disagreement, and review cost are visible in a compact domain.
 
-Core assignment pair:
+### Key finding
+
+On the canonical run (120 episodes / 480 steps), the benchmark cleanly separates allocators. Regret per step at K=1 is **0.091** for a hand-coded evidence-integrity rule, **0.176** for the model's own confidence/verification signals, and **0.191** for random. The takeaway is decision-relevant: a model that is well calibrated on average (**committee ECE 0.102**) does not, on its own, concentrate scarce review on the steps that need it. **Calibration on average ≠ knowing where review should go** — exactly the gap to measure before triaging human oversight with model confidence. Stable across 3 seeds (range 0.004). A utility-free robustness oracle confirms the model≈random conclusion and shows the hand-coded rule's edge is an artifact of the utility scale (it becomes the worst baseline once every committee error counts equally).
+
+Regenerate every number and the figure from the logs (no model calls needed):
+
+```bash
+python scripts/export_oversight_allocation.py   # -> report/oversight_allocation_results.{md,json} + figure
+python -m pytest tests/test_oversight_allocation.py   # 9 tests proving the metric (oracle optimality, regret>=0, ...)
+```
+
+- Paper: [`report/submission_paper.md`](report/submission_paper.md) (PDF: `python report/build_latex_pdf.py`)
+- Write-up: [`report/blog_misspent_oversight.md`](report/blog_misspent_oversight.md) — how I caught the benchmark grading itself, and the fix.
+
+> **Scope note.** The flagship metric is model-intrinsic by design: it scores the model's *own* uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline. Corruption-conditioned review routing is reported separately as a harness diagnostic, not as a model property.
+
+## Why this exists
+
+Most agent demos are judged by surface plausibility: the answer sounds reasonable, cites some tools, and appears coherent. That is not the same as being safe to rely on over multiple sequential decisions. This repo narrows the original stock-analysis assignment into a benchmark-first artifact for one deployment-critical behavior: **evidence-integrity triage under a finite review budget**.
+
+The supporting diagnostics are deliberately subordinate to that flagship construct:
+
+- calibration: does the reliability score track realized correctness closely enough to guide review?
+- selective action: does the system defer or verify instead of forcing every low-reliability case into BUY/HOLD/SELL?
+- auditability: does the run preserve enough evidence for a reviewer to challenge each approval, miss, or overreach?
+
+Finance is the testbed, not the only point. The same structure applies to any tool-using agent that must make sequential recommendations from uncertain evidence while paying for review.
+
+## 30-Second Explanation
+
+This project turns stock analysis into an oversight-allocation benchmark. A committee of specialized agents sees the same market state and emits votes with stated confidence and verification needs; some steps carry injected corrupted evidence. We then ask whether the model's *own* uncertainty signals can pick the steps that most need human review, scored as regret against an oracle that spends the same budget optimally. The useful output is not a BUY or SELL recommendation; it is a model-intrinsic measure of how well an agent rations scarce supervision under evidence stress.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["Historical replay environment"] --> B["Observation<br/>market state + mandate + prior step + tool evidence"]
+    B --> C["Momentum agent"]
+    B --> D["Value Contrarian agent"]
+    B --> E["Volatility Averse agent"]
+    C --> F["Abstention scorer"]
+    D --> F
+    E --> F
+    F --> G["Overseer<br/>approve | verify | abstain | escalate"]
+    G --> H["Environment transition"]
+    H --> I["Trajectory log + quality audit + failure labels"]
+```
+
+## Concrete Failure Example
+
+In the canonical headline artifact at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json), a TSLA recent-drawdown step is labeled `oversight_miss`, `regime_shift_brittleness`, and `state_tracking_failure`: the overseer recognized unresolved directional risk, but the finite budget was already exhausted, so the system approved `HOLD` while the realized outcome was `BUY`. That is the kind of failure this benchmark is built to surface. The system was not flagrantly noncompliant, but it was still not safe enough to trust in a brittle regime.
+
+## Headline Artifact Contract
+
+Each benchmark run writes one self-contained directory under `outputs/benchmark/<run_id>/` with:
+
+- `benchmark_config.json`
+- `progress.json`
+- `summary.json`
+- `episode_specs.json`
+- `episodes/<episode_id>.json`
+- `trajectories.jsonl`
+- `human_audit_candidates.jsonl`
+- `gold_slice_candidates.jsonl`
+- `gold_slice_review_template.csv`
+- `gold_slice_rubric.md`
+- `failure_gallery.json`
+
+This is deliberate: reviewers should be able to inspect a run without rerunning the benchmark or having access to your API keys.
+
+## Benchmark Design
+
+Each episode is a fixed-horizon historical replay over daily U.S. equities. At each step:
+
+1. the environment emits an observation with market features, tool evidence, a mandate, prior-step summary, and visible interruption or corruption events
+2. three strategy agents vote independently and do not see one another’s outputs
+3. the abstention layer estimates reliability from disagreement, confidence spread, evidence consistency, and mandate tension
+4. the overseer decides whether to `approve`, `request_verify`, `force_abstain`, or `escalate_human`
+5. the environment advances and logs the transition
+6. deterministic checks and sampled model-based judging score quality separately from bare compliance
+
+The action space is recommendation-centric:
+
+- directional actions: `BUY`, `HOLD`, `SELL`
+- safe deferrals: `ABSTAIN`, `VERIFY`, `ESCALATE`
+
+## What Is Evaluated
+
+Primary construct: oversight allocation under evidence corruption.
+
+Core metrics:
+
+- `review_rate` by clean versus corrupted evidence
+- `corruption_delta` for majority error, executed error, reward, and review routing
+- `intervention_rate` and `budget_limited_low_reliability_approvals`
+- `oversight_miss` and `oversight_overreach` counts
+
+Supporting safety diagnostics:
+
+- `selective_risk`
+- `abstention_gain`
+- `majority_expected_calibration_error`
+- `executed_expected_calibration_error`
+- `utility_per_intervention`
+- `worst_regime_error`
+
+Explicit failure taxonomy:
+
+- `state_tracking_failure`
+- `overconfident_action`
+- `unsafe_non_abstention`
+- `policy_violation`
+- `oversight_miss`
+- `oversight_overreach`
+- `corrupted_evidence_susceptibility`
+- `regime_shift_brittleness`
+- `explanation_action_mismatch`
+- `recovery_failure_after_interruption`
+
+## Reviewer Workflow
+
+Fastest way to understand a run:
+
+```bash
+python scripts/review_benchmark.py outputs/benchmark/smu_headline_v1
+```
+
+Render the main figures for a run:
+
+```bash
+python scripts/render_benchmark_figures.py outputs/benchmark/smu_headline_v1
+```
+
+Those scripts are intentionally lightweight and produce reviewer-facing summaries rather than another orchestration layer.
+
+## Current Status
+
+The current strongest empirical artifact is the canonical headline run at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json). It contains `120` episodes, `480` decision steps, `12` tickers, corrupted-evidence events, a budget-1 overseer, and sampled model-based quality judging.
+
+The main result supports the narrowed benchmark: corrupted evidence receives far more review, but the system still does not become robust to corruption.
+
+- corrupted-evidence steps are not hidden: review rate rises from `10.8%` on clean steps to `77.5%` on corrupted steps
+- corrupted-evidence steps still get worse executed outcomes: executed error rises from `39.8%` on clean steps to `48.4%` on corrupted steps
+- the overseer still has real weaknesses: `7` overreach cases, `4` oversight misses, and `14` budget-limited low-reliability approvals
+- abstention reduces risk modestly overall: `+0.0273` gain versus always acting
+- the best abstention operating point reaches `+0.0851` gain at threshold `0.8`
+- the hardest named slices are exactly the unstable ones: `recent_drawdown` and `high_momentum_speculative`
+
+The frozen tuning matrix at [`outputs/benchmark/smu_tuning_matrix_v1/matrix_summary.json`](outputs/benchmark/smu_tuning_matrix_v1/matrix_summary.json) remains the tuning-validation artifact. It showed that budget `1` was the cleanest operating point before scaling to the full canonical run: budget `2` reduced false negatives further, but reintroduced overreach and unnecessary verification of benign holds.
+
+Headline artifact from [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json):
+
+| Metric | Value |
+| --- | ---: |
+| Episodes / steps | `120 / 480` |
+| Executed coverage | `86.0%` |
+| Selective risk | `41.6%` |
+| Abstention gain | `+0.0273` |
+| Best abstention gain | `+0.0851` at threshold `0.8` |
+| Majority-vote ECE | `0.2636` |
+| Executed-action ECE | `0.2683` |
+| Intervention rate | `14.0%` |
+| Review rate | `27.5%` |
+| Worst named regime | `recent_drawdown` at `64.8%` error |
+
+Regime summary from the headline run:
+
+| Regime | Majority error | Review rate |
+| --- | ---: | ---: |
+| `steady_large_cap` | `17.1%` | `17.1%` |
+| `sideways_low_signal` | `22.7%` | `19.3%` |
+| `high_volatility_news_sensitive` | `54.5%` | `22.7%` |
+| `high_momentum_speculative` | `63.6%` | `33.0%` |
+| `recent_drawdown` | `64.8%` | `51.1%` |
+
+The remaining honest limitation is no longer just a tiny artifact: the full headline run includes `84` residual mixed-transition steps with `48.8%` majority error. This slice is now explicitly labeled `mixed_transition_residual` and treated as a diagnostic residual regime rather than as a canonical named market regime.
+
+## Original Assignment Lineage
+
+The repo still fully supports the underlying course assignment:
 
 - Strategy A: `Momentum Trader`
 - Strategy B: `Value Contrarian`
+- bonus Strategy C: `Volatility Averse`
+- disagreement-triggered debate mode
+- historical backtest scorecard
+- per-stock JSON outputs for grading
 
-Bonus third strategy:
-
-- Strategy C: `Volatility Averse`
-
-Why this set works:
-
-- `Momentum Trader` emphasizes short-term vs long-term moving-average structure, recent returns, and volume confirmation.
-- `Value Contrarian` emphasizes trailing P/E, RSI, drawdown, and distance from the 52-week range.
-- `Volatility Averse` emphasizes realized volatility, ATR, and drawdown risk.
-
-This gives the project a strong analytical contrast:
-
-- trend continuation
-- valuation / mean reversion
-- risk avoidance
-
-## LLM provider
-
-- Provider: OpenAI
-- Default model: `gpt-5.4-mini`
-
-The model is configurable through `OPENAI_MODEL`.
-
-## Framework and toolset
-
-- Orchestration: LangGraph
-- Market data: `yfinance`
-- LLM SDK: `openai`
-- Data wrangling: `pandas`, `numpy`
-- Validation: `pydantic`
-- Env loading: `python-dotenv`
+The benchmark extends that core instead of replacing it.
 
 ## Setup
 
@@ -57,10 +209,10 @@ source .venv/bin/activate
 2. Install dependencies.
 
 ```bash
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
-3. Add your OpenAI key.
+3. Add your OpenAI key locally.
 
 ```bash
 cp .env.example .env
@@ -71,204 +223,254 @@ Then edit `.env`:
 ```bash
 OPENAI_API_KEY=your_real_key_here
 OPENAI_MODEL=gpt-5.4-mini
+OPENAI_TIMEOUT_SECONDS=60
+SMU_STEP_TIMEOUT_SECONDS=300
+TAVILY_REMOTE_MCP_URL=your_tavily_remote_mcp_url_if_you_use_it
 ```
 
-Important:
+Notes:
 
-- `yfinance` does **not** require a Yahoo Finance API key.
-- There is no separate Yahoo credential to submit for this implementation.
+- `yfinance` does not require a Yahoo Finance API key for this implementation
+- `.env` is ignored by [`.gitignore`](.gitignore), so your key stays local
+- OpenAI response caching is enabled by default under `.cache/openai/` to keep reruns affordable
+- `OPENAI_TIMEOUT_SECONDS` sets the OpenAI client timeout; `SMU_STEP_TIMEOUT_SECONDS` is the outer wall-clock guardrail for each benchmark decision step
+- `TAVILY_REMOTE_MCP_URL` is optional local tooling configuration for Tavily MCP; the benchmark runtime itself does not read it
 
-## Verify setup
+## Verify The Environment
 
-Before the full run:
+Fast local verification without API calls:
+
+```bash
+pytest -q
+python scripts/run_smoke_benchmark.py
+```
+
+Verify live dependencies:
 
 ```bash
 python -m src.main --verify-setup
 ```
 
-This command performs:
+This performs:
 
 - one real Yahoo Finance fetch
 - one real OpenAI call
 
-## Run the full workflow
+## Run The Frozen Tuning Matrix
 
-Run the default five-stock batch with all bonus features enabled:
+This is the current best validation command for the safety benchmark:
+
+```bash
+python scripts/run_tuning_matrix.py \
+  --matrix-run-id smu_tuning_matrix_v1 \
+  --baseline-run-id smu_validation_v4
+```
+
+The matrix writes:
+
+- six per-cell benchmark run directories
+- one aggregate matrix summary at `outputs/benchmark/smu_tuning_matrix_v1/matrix_summary.json`
+- acceptance gates and baseline deltas for the full tuning pass
+
+## Run The Benchmark
+
+Canonical benchmark entrypoint:
+
+```bash
+python -m src.main --benchmark
+```
+
+Smaller validation run:
+
+```bash
+python -m src.main --benchmark COST TSLA JNJ HIMS \
+  --benchmark-episodes 8 \
+  --benchmark-horizon 4 \
+  --benchmark-oversight-budget 1 \
+  --benchmark-judge-sample-size 2 \
+  --benchmark-run-id smu_validation_v4
+```
+
+The current frozen canonical spec is:
+
+- 12 tickers
+- 120 episodes
+- 4 steps per episode
+- oversight budget `1`
+- seed `20260414`
+
+## Publication Artifact Commands
+
+Show the current publication progress from the generated artifacts:
+
+```bash
+python scripts/show_publication_progress.py
+python scripts/export_preliminary_results.py --output report/preliminary_results.md --json-output report/preliminary_results.json
+```
+
+Check the three-model publication registry and record unavailable models without silent substitution:
+
+```bash
+python scripts/preflight_models.py
+```
+
+Before spending a full benchmark cell, run the optional live Responses API preflight. This makes one minimal call per configured model and records quota/auth failures such as `insufficient_quota` before a long run starts:
+
+```bash
+python scripts/preflight_models.py --live-response-check
+```
+
+Preview the full publication matrix before spending API budget:
+
+```bash
+python scripts/run_publication_suite.py --status-only
+python scripts/run_publication_suite.py --dry-run --resume --max-runs 3
+```
+
+Run the live suite in resumable batches after approving API cost/runtime:
+
+```bash
+python scripts/run_publication_suite.py --live-response-check --resume --max-runs 3
+```
+
+If a run stops because the OpenAI account returns `insufficient_quota`, leave the partial run directory in place. After quota is restored, rerun the same command with `--resume`; completed episode artifacts are reused and the suite summary reports the failed partial cell separately until it validates.
+
+If a live cell stalls without advancing `progress.json`, terminate the stale process and resume the same command. The runner enforces `SMU_STEP_TIMEOUT_SECONDS` around each decision step so future hangs become explicit failed progress records instead of unbounded background work.
+
+Check optional academic data access through WRDS:
+
+```bash
+python scripts/check_academic_data.py
+```
+
+If CMU/WRDS credentials are available, set `WRDS_USERNAME` locally and install the optional adapter:
+
+```bash
+pip install -e ".[wrds]"
+```
+
+Build the two-reviewer human audit packet:
+
+```bash
+python scripts/build_human_audit_packet.py outputs/benchmark/smu_headline_v1 --sample-size 60
+python scripts/summarize_human_audit.py outputs/human_audit/smu_headline_v1 --expected-count 60
+```
+
+The reviewer packets are generated from the run's canonical `human_audit_candidates.jsonl` so the labeled units match the declared audit slice. Reviewer CSVs include compact JSON evidence fields for market features, tool evidence, committee votes, abstention, and overseer decisions, but omit automated status and failure labels; the adjudication CSV keeps those labels for model-vs-human comparison after both blinded reviews are complete. Existing reviewer and adjudication CSVs are preserved by default so human labels are not erased by regeneration; pass `--force` only when intentionally rebuilding blank CSV templates.
+
+Validate the canonical artifact contract and manuscript values:
+
+```bash
+python scripts/validate_artifact_contract.py outputs/benchmark/smu_headline_v1
+python scripts/export_paper_tables.py outputs/benchmark/smu_headline_v1 --output /tmp/smu_tables
+python scripts/export_preliminary_results.py --output report/preliminary_results.md --json-output report/preliminary_results.json
+python scripts/check_report_consistency.py report/safe_market_universes_note.md outputs/benchmark/smu_headline_v1
+python scripts/check_croissant_metadata.py metadata/smu_croissant.json
+```
+
+The artifact validator checks completion and internal consistency, not just file presence: `progress.json`, episode files, trajectory counts, audit-candidate counts, ticker lists, action distribution, total reward, and utility-per-intervention semantics must all match the run log.
+
+Track remaining publication blockers:
+
+```bash
+python scripts/aggregate_publication_suite.py \
+  --manifest outputs/benchmark/publication_suite_manifest.json \
+  --outputs-root outputs/benchmark \
+  --output outputs/benchmark/publication_suite_summary.json
+python scripts/attach_human_audit_summary.py outputs/benchmark/smu_headline_v1 outputs/human_audit/smu_headline_v1 --expected-count 60
+python scripts/check_publication_readiness.py --allow-pending
+```
+
+The current expected readiness state before the full live matrix, live model preflight, and human labels are complete is `external_blockers`: the canonical artifact passes validation, while the 54-run live suite, model availability/quota, and adjudicated human audit determine what remains.
+
+## Publication Metadata
+
+This repo includes:
+
+- `DATA_CARD.md`
+- `MODEL_CARD.md`
+- `REPRODUCIBILITY.md`
+- `REPRODUCIBILITY_CHECKLIST.md`
+- `ARTIFACT_MANIFEST.md`
+- `ETHICS.md`
+- `AI_USE_DISCLOSURE.md`
+- `SUBMISSION_CHECKLIST.md`
+- `metadata/smu_croissant.json`
+- `CITATION.cff`
+- `LICENSE`
+- `.github/workflows/ci.yml`
+
+Known data limitation: the current implementation uses `yfinance` for runtime market-data fetches. Raw market data is not the contribution and is not claimed as a redistributable canonical dataset. A future publication-grade release should migrate to WRDS/CRSP/Compustat or another source with explicit academic access and reproducibility terms.
+
+The current headline safety setting is also budget `1`, because the frozen tuning matrix shows it is the best compromise between unresolved risk and unnecessary oversight spending.
+
+Canonical ticker universe:
+
+- `COST`, `JNJ`, `KO`, `PG`, `AAPL`, `XOM`
+- `HIMS`, `PLTR`, `TSLA`, `SMCI`, `NKE`, `PFE`
+
+These were chosen to cover steady large-cap, sideways low-signal, high-momentum speculative, recent drawdown, and higher-volatility slices.
+
+## Run The Original Assignment Workflow
+
+Default five-stock batch:
 
 ```bash
 python -m src.main
 ```
 
-Current default basket:
-
-- `COST` for a steady, established large-cap case
-- `HIMS` for a volatile recent momentum case
-- `SMCI` for a sharp decline / drawdown case
-- `JNJ` for a sideways or lower-conviction case
-- `TSLA` for a disagreement-rich speculative mega-cap case
-
-Run a custom stock list:
+Custom stock list:
 
 ```bash
 python -m src.main NVDA TSLA JNJ KO
 ```
 
-Inspect live market data only:
+Market-data-only check:
 
 ```bash
 python -m src.main --market-only NVDA
 ```
 
-Skip the debate extension:
+Skip debate mode:
 
 ```bash
 python -m src.main --skip-debate
 ```
 
-Skip the historical backtest:
+Skip backtest:
 
 ```bash
 python -m src.main --skip-backtest
 ```
 
-Tune backtest settings:
+## Output Files
 
-```bash
-python -m src.main --backtest-checkpoints 4 --backtest-forward-days 20 --backtest-hold-band 3.0
-```
+Assignment outputs:
 
-## Output files
-
-The workflow writes:
-
-- one JSON file per stock in `outputs/`
-- one aggregated `outputs/summary.json`
-- one historical scorecard in `outputs/backtest.json`
-
-Current canonical output set:
-
-- `outputs/COST.json`
-- `outputs/HIMS.json`
-- `outputs/SMCI.json`
-- `outputs/JNJ.json`
-- `outputs/TSLA.json`
+- `outputs/<TICKER>.json`
 - `outputs/summary.json`
 - `outputs/backtest.json`
 
-The per-stock JSON files now include:
+Benchmark outputs:
 
-- Strategy A result
-- Strategy B result
-- Strategy C result
-- evaluator analysis
-- debate output when disagreement triggers a second round
+- `outputs/benchmark/<run_id>/...`
 
-These pre-generated outputs are intended to be committed so grading does not require your API key.
+Pre-generated outputs are included so a reviewer can inspect the artifact without using your API key.
 
-## Idempotence and GitHub safety
+Benchmark note and application appendix drafts live at:
 
-This project is organized so reruns stay clean:
+- [`report/safe_market_universes_note.md`](report/safe_market_universes_note.md)
+- [`report/application_appendix.md`](report/application_appendix.md)
 
-- rerunning `python -m src.main` overwrites the same per-stock JSON files for the requested tickers
-- rerunning the batch also rewrites `outputs/summary.json` and `outputs/backtest.json`
-- the workflow does not append duplicate rows or create timestamped output sprawl by default
+## Secret Handling And GitHub Safety
 
-What is written to disk:
+What is written locally:
 
-- source files, prompts, reports, and JSON outputs in this workspace
-- your local `.env` file if you create it
+- source code, prompts, reports, generated JSON outputs, and cached model responses
 
-What is **not** automatically pushed anywhere:
+What is not pushed automatically:
 
-- there is no Git repository until you run `git init`
-- nothing is uploaded to GitHub unless you explicitly stage, commit, and push it
-- the Codex app's local conversation mode is not a file inside this repository by default
+- nothing goes to GitHub until you explicitly commit and push
+- your `.env` file stays local unless you manually override `.gitignore`
 
-Secret-handling rule:
-
-- `.env` is ignored by [`.gitignore`](/Users/pablo/Desktop/Agentic%20AI/Trading%20Simulation/.gitignore), so your OpenAI key should stay local
-- after `git init`, verify that `.env` is still ignored before your first commit
-
-## Backtest methodology
-
-The backtest extension uses recent historical checkpoints per stock and evaluates each strategy’s recommendation against realized forward returns.
-
-Current default methodology:
-
-- `3` checkpoints per stock
-- `20` forward trading days
-- `3.0%` hold band
-
-Outcome mapping:
-
-- forward return `> +3%` => realized outcome `BUY`
-- forward return `< -3%` => realized outcome `SELL`
-- otherwise => realized outcome `HOLD`
-
-Important rigor note:
-
-- historical snapshots intentionally omit `trailing_pe` to avoid lookahead bias
-- `yfinance.info` exposes live metadata, not historical valuation snapshots
-- the Value Contrarian prompt is already designed to lower confidence and rely more on RSI / range signals when valuation is missing
-
-## Report workflow
-
-Pre-filled report assets are already prepared:
-
-- main report draft: `report/report.md`
-- AI use appendix draft: `report/ai_use_appendix.md`
-- post-run checklist: `report/post_run_fill_guide.md`
-
-Before the OpenAI run, these files already contain:
-
-- architecture explanation
-- stock-selection rationale
-- documentation-backed design logic
-- actual first full-run results
-- backtest analysis
-- a documented failure / surprise case
-
-The remaining manual step is to export the Markdown drafts to PDF:
-
-- `report/report.md` -> `report/report.pdf`
-- `report/ai_use_appendix.md` -> `report/ai_use_appendix.pdf`
-
-## Repository layout
-
-```text
-.
-├── README.md
-├── requirements.txt
-├── prompts/
-│   ├── debate.txt
-│   ├── evaluator.txt
-│   ├── strategy_a.txt
-│   ├── strategy_b.txt
-│   └── strategy_c.txt
-├── outputs/
-├── report/
-│   ├── ai_use_appendix.md
-│   ├── langgraph_workflow.mmd
-│   ├── post_run_fill_guide.md
-│   └── report.md
-└── src/
-    ├── __init__.py
-    ├── backtest.py
-    ├── config.py
-    ├── evaluator.py
-    ├── llm.py
-    ├── main.py
-    ├── market_data.py
-    ├── models.py
-    ├── orchestration.py
-    └── strategy_agents.py
-```
-
-## Documentation references used in implementation
-
-- OpenAI Structured Outputs guide: [Structured outputs](https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses&lang=python)
-- OpenAI Responses API reference: [Responses API](https://platform.openai.com/docs/api-reference/responses)
-- OpenAI models reference: [Models](https://platform.openai.com/docs/models)
-- LangGraph overview: [LangGraph overview](https://docs.langchain.com/oss/python/langgraph)
-- LangGraph Graph API guide: [Use the graph API](https://docs.langchain.com/oss/python/langgraph/use-graph-api)
-- yfinance README: [yfinance README](https://github.com/ranaroussi/yfinance)
+If you plan to publish the repo, verify `git status` before every commit and make sure `.env` is still ignored.
