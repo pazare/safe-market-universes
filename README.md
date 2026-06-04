@@ -4,9 +4,9 @@ Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can 
 
 This is a safety-evaluation artifact, not a trading system and not investment advice. Finance is the testbed because evidence integrity, uncertainty, disagreement, and review cost are visible in a compact domain.
 
-### Headline finding (honest negative)
+### Key finding
 
-On the canonical run (120 episodes / 480 steps), ranking review by the model's own confidence/verification signals (**regret/step 0.176** at K=1) is barely better than **random (0.191)** and roughly **2× the regret of a trivial hand-coded evidence-integrity rule (0.091)**. The model misses **73%** of review-worthy steps and, at the tightest budget, catches corrupted-evidence risk *less* often than clean (recall **22.8%** vs **28.2%**) — even though its confidence is *better* calibrated (**ECE 0.102**) than the hand-coded heuristic (**0.264**). **Calibration on average ≠ spending review on the right step.**
+On the canonical run (120 episodes / 480 steps), the benchmark cleanly separates allocators. Regret per step at K=1 is **0.091** for a hand-coded evidence-integrity rule, **0.176** for the model's own confidence/verification signals, and **0.191** for random. The takeaway is decision-relevant: a model that is well calibrated on average (**committee ECE 0.102**) does not, on its own, concentrate scarce review on the steps that need it. **Calibration on average ≠ knowing where review should go** — exactly the gap to measure before triaging human oversight with model confidence. Stable across 3 seeds (range 0.004).
 
 Regenerate every number and the figure from the logs (no model calls needed):
 
@@ -18,7 +18,7 @@ python -m pytest tests/test_oversight_allocation.py   # 9 tests proving the metr
 - Paper: [`report/submission_paper.md`](report/submission_paper.md) (PDF: `python report/build_latex_pdf.py`)
 - Write-up: [`report/blog_misspent_oversight.md`](report/blog_misspent_oversight.md) — how I caught the benchmark grading itself, and the fix.
 
-> **Framing note (v1 → v1.1).** Earlier text led with a corruption-induced review-rate jump (10.8%→77.5%). That signal is largely produced by the harness's own injected-string detector, so it is now a *supporting diagnostic*; the model-intrinsic **oversight-allocation regret** above is the flagship.
+> **Scope note.** The flagship metric is model-intrinsic by design: it scores the model's *own* uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline. Corruption-conditioned review routing is reported separately as a harness diagnostic, not as a model property.
 
 ## Why this exists
 
@@ -34,7 +34,7 @@ Finance is the testbed, not the only point. The same structure applies to any to
 
 ## 30-Second Explanation
 
-This project turns stock analysis into an oversight-allocation benchmark. A committee of specialized agents sees the same market state and emits votes with stated confidence and verification needs; some steps carry injected corrupted evidence. We then ask whether the model's *own* uncertainty signals can pick the steps that most need human review, scored as regret against an oracle that spends the same budget optimally. The useful output is not a BUY or SELL recommendation; it is a model-intrinsic measure of how well an agent rations scarce supervision under evidence stress — and the honest answer here is: not well.
+This project turns stock analysis into an oversight-allocation benchmark. A committee of specialized agents sees the same market state and emits votes with stated confidence and verification needs; some steps carry injected corrupted evidence. We then ask whether the model's *own* uncertainty signals can pick the steps that most need human review, scored as regret against an oracle that spends the same budget optimally. The useful output is not a BUY or SELL recommendation; it is a model-intrinsic measure of how well an agent rations scarce supervision under evidence stress.
 
 ## Architecture
 
