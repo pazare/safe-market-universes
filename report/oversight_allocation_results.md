@@ -9,7 +9,7 @@ Primary evidence: headline run with 120 episodes / 480 steps. Robustness: 2160 p
 - Honest committee-confidence ECE: `0.1018`
 - Hand-coded reliability-heuristic ECE: `0.2636`
 
-The prior paper reported only the heuristic ECE, which measures the author's formula, not the model.
+The heuristic-reliability ECE measures the hand-coded reliability formula, not the model; committee-confidence ECE is the model-intrinsic calibration measure and is the one reported here.
 
 ## Allocation regret per step (lower is better; oracle = 0)
 

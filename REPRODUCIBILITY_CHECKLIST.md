@@ -23,11 +23,13 @@
 pytest -q
 python scripts/run_smoke_benchmark.py
 python scripts/validate_artifact_contract.py outputs/benchmark/smu_headline_v1
-python scripts/check_report_consistency.py report/safe_market_universes_note.md outputs/benchmark/smu_headline_v1
+python scripts/check_report_consistency.py README.md outputs/benchmark/smu_headline_v1
 python scripts/show_publication_progress.py
 python scripts/run_publication_suite.py --status-only --manifest /tmp/smu_publication_manifest.json
-python scripts/check_publication_readiness.py
+python scripts/check_publication_readiness.py --allow-pending
 ```
+
+The strict gate (`check_publication_readiness.py` without `--allow-pending`) is expected to exit nonzero with `external_blockers` until the live suite and human audit are complete.
 
 ## Known Limits
 

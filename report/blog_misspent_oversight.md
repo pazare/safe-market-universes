@@ -24,13 +24,13 @@ The headline allocator, **model-signal**, ranks steps using *only* the committee
 
 ![Oversight-allocation regret and corruption recall](figures/submission/oversight_allocation.png)
 
-On 120 episodes / 480 steps, the benchmark separates the allocators cleanly. Regret per step at K=1:
+On 120 episodes / 480 steps, the benchmark cleanly separates the hand-coded baseline from the other two allocators — and the model's own signal lands near random. Regret per step at K=1:
 
 - **0.091** — a hand-coded evidence-integrity rule (a strong reference: it has privileged access to the injected corruption markers).
 - **0.176** — the model's own uncertainty signal.
 - **0.191** — random.
 
-The decision-relevant finding: a model that is **well calibrated on average** (committee ECE **0.102**, better than the hand-coded heuristic's 0.264) does **not, on its own, concentrate review on the steps that need it.** Good average calibration is not the same as knowing *where* a human should look — and that distinction is exactly what a team must measure before triaging scarce human review with model confidence. The result is stable across three seeds (range 0.004).
+The decision-relevant finding: a model that is **comparatively well calibrated on average** (committee ECE **0.102**, versus 0.264 for the hand-coded heuristic) does **not, on its own, concentrate review on the steps that need it.** Good average calibration is not the same as knowing *where* a human should look — and that distinction is exactly what a team must measure before triaging scarce human review with model confidence. The result is stable across three seeds (range 0.004).
 
 ## What I'm claiming, and what I'm not
 

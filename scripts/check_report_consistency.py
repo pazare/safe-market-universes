@@ -12,7 +12,7 @@ from src.benchmark.report_consistency import check_report_consistency
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Check report values against a benchmark summary.")
-    parser.add_argument("report", nargs="?", default="report/safe_market_universes_note.md")
+    parser.add_argument("report", nargs="?", default="README.md")
     parser.add_argument("run_dir", nargs="?", default="outputs/benchmark/smu_headline_v1")
     parser.add_argument("--suite-summary", default="outputs/benchmark/publication_suite_summary.json")
     parser.add_argument("--output", help="Optional JSON report path.")

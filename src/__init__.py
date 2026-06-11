@@ -1,2 +1,1 @@
-"""StockTrader package."""
-
+"""Safe MarketUniverses package."""

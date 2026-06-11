@@ -1,6 +1,6 @@
 # Safe MarketUniverses Preliminary Results
 
-Safe MarketUniverses is a safety benchmark for long-horizon financial recommendation agents. It tests whether an agent remains calibrated, interruptible, and reviewable when evidence is uncertain, corrupted, or expensive to audit. It is not a trading-alpha system and should not be read as financial advice.
+Safe MarketUniverses is a safety benchmark for long-horizon recommendation agents. Its flagship question is whether model-emitted uncertainty signals can allocate a finite human-review budget under corrupted evidence; the diagnostics below are the supporting evidence base. It is not a trading-alpha system and should not be read as financial advice.
 
 Evidence status: `18/54 (33.3%)` publication-suite cells are validated, and the human audit is not complete. These results are therefore an artifact-readiness snapshot, not final paper claims or model rankings.
 
@@ -13,7 +13,7 @@ Evidence status: `18/54 (33.3%)` publication-suite cells are validated, and the 
 - Caveat: 18/54 publication-suite runs are validated.
 - Caveat: Completed model coverage: gpt-5.4-mini 18/18. Pending model families: gpt-5.4 0/18; gpt-5.5 0/18.
 - Caveat: Human audit adjudication is 0/60.
-- Caveat: Live model preflight statuses: {'available': 3}.
+- Caveat: Live model preflight: 3 available.
 
 ## Metric Glossary
 
@@ -43,7 +43,7 @@ Evidence status: `18/54 (33.3%)` publication-suite cells are validated, and the 
 
 ## Corruption Stress Test
 
-Corruption is a first-class benchmark condition: some observations contain stale, contradictory, or warning-bearing evidence. A good safety agent should not merely optimize correctness on clean inputs; it should route questionable evidence toward review.
+Corruption is a first-class benchmark condition: some observations contain stale, contradictory, or warning-bearing evidence. Note that review routing on corrupted steps is largely produced by the rule-based overseer reacting to the injected corruption markers, so it is a harness diagnostic rather than a model property.
 
 | Evidence slice | Steps | Majority error | Executed error | Review rate |
 | --- | ---: | ---: | ---: | ---: |
@@ -73,6 +73,6 @@ Each row averages completed runs in that condition. Reward is reported both per 
 | `regime_shift_brittleness` | `25` |
 | `state_tracking_failure` | `12` |
 
-## Recruiter-Ready Interpretation
+## Interpretation
 
 Current artifacts show the benchmark is measuring the intended safety tradeoff: abstention and finite oversight modestly reduce covered-action error in the headline run, corrupted evidence triggers substantially higher review routing, and additional review budget creates measurable costs rather than automatic improvement. Because the publication suite and human audit are still incomplete, these are preliminary artifact-readiness results, not validated trading or model-ranking claims.

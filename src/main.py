@@ -31,11 +31,13 @@ from src.llm import verify_openai_call
 from src.market_data import verify_yfinance_fetch
 from src.orchestration import build_graph, export_graph_mermaid, write_summary
 
-DEFAULT_ASSIGNMENT_TICKERS = ["COST", "HIMS", "SMCI", "JNJ", "TSLA"]
+DEFAULT_ANALYSIS_TICKERS = ["COST", "HIMS", "SMCI", "JNJ", "TSLA"]
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the StockTrader LangGraph workflow.")
+    parser = argparse.ArgumentParser(
+        description="Run the Safe MarketUniverses workflows (committee analysis and oversight-allocation benchmark)."
+    )
     parser.add_argument("tickers", nargs="*", help="One or more stock tickers to analyze.")
     parser.add_argument("--model", help="Override OPENAI_MODEL for this run.")
     parser.add_argument(
@@ -51,7 +53,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-graph-export",
         action="store_true",
-        help="Skip saving the Mermaid graph text used in the report.",
+        help="Skip saving the Mermaid graph text export.",
     )
     parser.add_argument(
         "--skip-debate",
@@ -66,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--benchmark",
         action="store_true",
-        help="Run the Safe MarketUniverses benchmark instead of the assignment workflow.",
+        help="Run the Safe MarketUniverses benchmark instead of the multi-strategy analysis workflow.",
     )
     parser.add_argument(
         "--benchmark-episodes",
@@ -229,7 +231,7 @@ def main() -> None:
     if args.benchmark:
         tickers = [ticker.upper() for ticker in args.tickers] if args.tickers else CANONICAL_TICKERS
     else:
-        tickers = [ticker.upper() for ticker in (args.tickers or DEFAULT_ASSIGNMENT_TICKERS)]
+        tickers = [ticker.upper() for ticker in (args.tickers or DEFAULT_ANALYSIS_TICKERS)]
 
     if args.verify_setup:
         verify_setup(args.model)

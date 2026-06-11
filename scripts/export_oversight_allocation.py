@@ -156,7 +156,8 @@ def render_markdown(headline: dict[str, Any], suite: dict[str, Any], per_seed: d
         f"- Honest committee-confidence ECE: `{_fmt(headline['calibration']['committee_confidence_ece'])}`",
         f"- Hand-coded reliability-heuristic ECE: `{_fmt(headline['calibration']['heuristic_reliability_ece'])}`",
         "",
-        "The prior paper reported only the heuristic ECE, which measures the author's formula, not the model.",
+        "The heuristic-reliability ECE measures the hand-coded reliability formula, not the model; "
+        "committee-confidence ECE is the model-intrinsic calibration measure and is the one reported here.",
         "",
         "## Allocation regret per step (lower is better; oracle = 0)",
         "",

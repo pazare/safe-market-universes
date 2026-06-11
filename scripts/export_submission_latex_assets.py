@@ -290,37 +290,6 @@ Episode & Step & Ticker & Labels & Action & Mechanism \\
     )
 
 
-def _audit_status_table(suite: dict[str, Any], human: dict[str, Any], output_dir: Path) -> None:
-    completion = human["completion"]
-    rows = [
-        ("Publication cells completed", f"{suite['completed_run_count']} / {suite['planned_run_count']}"),
-        ("Failed resumable cells", str(len(suite.get("failed_run_ids", [])))),
-        ("Not-started cells", str(len(suite.get("missing_run_ids", [])))),
-        ("Reviewer A labels complete", f"{completion['expected_count'] - completion['reviewer_a_missing_count']} / {completion['expected_count']}"),
-        ("Reviewer B labels complete", f"{completion['expected_count'] - completion['reviewer_b_missing_count']} / {completion['expected_count']}"),
-        ("Adjudicated labels complete", f"{completion['expected_count'] - completion['adjudicated_missing_count']} / {completion['expected_count']}"),
-        ("Model-vs-human comparison ready", str(human["model_vs_human_ready"])),
-    ]
-    body = "\n".join(rf"{_tex_escape(name)} & {_tex_escape(value)} \\" for name, value in rows)
-    _write(
-        output_dir / "audit_status_table.tex",
-        rf"""
-\begin{{table}}[t]
-\centering
-\caption{{Current artifact-completion status. Pending cells and missing human labels constrain the empirical claims.}}
-\label{{tab:artifact-status}}
-\begin{{tabular}}{{ll}}
-\toprule
-Item & Status \\
-\midrule
-{body}
-\bottomrule
-\end{{tabular}}
-\end{{table}}
-""",
-    )
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export LaTeX assets for the Safe MarketUniverses submission paper.")
     parser.add_argument("--headline-summary", default="outputs/benchmark/smu_headline_v1/summary.json")
@@ -346,7 +315,6 @@ def main() -> None:
     _matrix_table(headline, output_dir)
     _failure_count_table(headline, output_dir)
     _failure_gallery_table(headline, output_dir)
-    _audit_status_table(suite, human, output_dir)
     print(f"Exported LaTeX submission assets in {output_dir}")
 
 

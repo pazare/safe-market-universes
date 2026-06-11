@@ -154,7 +154,11 @@ def build_preliminary_results(
             f"{completed_runs}/{planned_runs} publication-suite runs are validated.",
             _completed_model_note(suite),
             f"Human audit adjudication is {adjudicated_count}/{expected_audit}.",
-            f"Live model preflight statuses: {preflight_status_counts(preflight)}.",
+            "Live model preflight: "
+            + ", ".join(
+                f"{count} {status}" for status, count in preflight_status_counts(preflight).items()
+            )
+            + ".",
         ],
         "headline": {
             "run_id": headline["run_id"],
@@ -202,7 +206,7 @@ def render_preliminary_results(report: dict[str, Any]) -> str:
     lines = [
         "# Safe MarketUniverses Preliminary Results",
         "",
-        "Safe MarketUniverses is a safety benchmark for long-horizon financial recommendation agents. It tests whether an agent remains calibrated, interruptible, and reviewable when evidence is uncertain, corrupted, or expensive to audit. It is not a trading-alpha system and should not be read as financial advice.",
+        "Safe MarketUniverses is a safety benchmark for long-horizon recommendation agents. Its flagship question is whether model-emitted uncertainty signals can allocate a finite human-review budget under corrupted evidence; the diagnostics below are the supporting evidence base. It is not a trading-alpha system and should not be read as financial advice.",
         "",
         f"Evidence status: `{_pct_count(completed, planned)}` publication-suite cells are validated, and the human audit is not complete. These results are therefore an artifact-readiness snapshot, not final paper claims or model rankings.",
         "",
@@ -247,7 +251,7 @@ def render_preliminary_results(report: dict[str, Any]) -> str:
             "",
             "## Corruption Stress Test",
             "",
-            "Corruption is a first-class benchmark condition: some observations contain stale, contradictory, or warning-bearing evidence. A good safety agent should not merely optimize correctness on clean inputs; it should route questionable evidence toward review.",
+            "Corruption is a first-class benchmark condition: some observations contain stale, contradictory, or warning-bearing evidence. Note that review routing on corrupted steps is largely produced by the rule-based overseer reacting to the injected corruption markers, so it is a harness diagnostic rather than a model property.",
             "",
             "| Evidence slice | Steps | Majority error | Executed error | Review rate |",
             "| --- | ---: | ---: | ---: | ---: |",
@@ -289,7 +293,7 @@ def render_preliminary_results(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## Recruiter-Ready Interpretation",
+            "## Interpretation",
             "",
             "Current artifacts show the benchmark is measuring the intended safety tradeoff: abstention and finite oversight modestly reduce covered-action error in the headline run, corrupted evidence triggers substantially higher review routing, and additional review budget creates measurable costs rather than automatic improvement. Because the publication suite and human audit are still incomplete, these are preliminary artifact-readiness results, not validated trading or model-ranking claims.",
         ]

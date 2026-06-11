@@ -81,7 +81,9 @@ python scripts/export_paper_tables.py outputs/benchmark/smu_headline_v1 --output
 python scripts/export_preliminary_results.py --output report/preliminary_results.md --json-output report/preliminary_results.json
 python scripts/check_croissant_metadata.py metadata/smu_croissant.json
 python scripts/run_publication_suite.py --status-only --manifest /tmp/smu_publication_manifest.json
-python scripts/check_publication_readiness.py
+python scripts/check_publication_readiness.py --allow-pending
 ```
+
+The strict readiness gate (without `--allow-pending`) is expected to exit nonzero with `external_blockers` until the full live suite and the two-reviewer human audit are complete.
 
 The validator fails on stale regime labels, missing metric namespaces, absent ablations, missing required files, or trajectory records that no longer satisfy the Pydantic artifact schema.

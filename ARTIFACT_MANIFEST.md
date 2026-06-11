@@ -1,5 +1,13 @@
 # Artifact Manifest
 
+## Flagship Result
+
+- `scripts/export_oversight_allocation.py`: regenerates the flagship oversight-allocation numbers, tables, and figure from committed logs with no model calls.
+- `report/oversight_allocation_results.md` / `report/oversight_allocation_results.json`: the flagship result files.
+- `report/figures/submission/oversight_allocation.png`: the flagship figure.
+- `tests/test_oversight_allocation.py`: invariant checks for the metric (oracle optimality, regret >= 0, utility-free robustness).
+- `outputs/benchmark/publication_gpt_5_4_mini_*`: the 18 committed `gpt-5.4-mini` budget x corruption x seed suite cells backing the robustness pooling.
+
 ## Core Code
 
 - `src/benchmark/`: Safe MarketUniverses environment, episode generation, abstention, oversight, judging, metrics, and runtime.
@@ -15,16 +23,15 @@
 - `REPRODUCIBILITY_CHECKLIST.md`: venue-style reproducibility checklist.
 - `ETHICS.md`: safety, financial-advice, and misuse disclosure.
 - `AI_USE_DISCLOSURE.md`: AI-assistance disclosure for the code and manuscript package.
-- `SUBMISSION_CHECKLIST.md`: reviewer-readiness and release-freeze checklist.
 - `metadata/smu_croissant.json`: Croissant-style metadata and RAI pointers for benchmark artifacts.
 - `CITATION.cff`: citation metadata.
 - `LICENSE`: software license.
 
 ## Benchmark Outputs
 
-The current headline artifact is `outputs/benchmark/smu_headline_v1/`, with `120` episodes and `480` steps. It validates against `smu-artifact-v2` using `python scripts/validate_artifact_contract.py outputs/benchmark/smu_headline_v1`. Generated outputs are inspection artifacts, not investment recommendations.
+The canonical headline artifact is `outputs/benchmark/smu_headline_v1/`, with `120` episodes and `480` steps. It validates against `smu-artifact-v2` using `python scripts/validate_artifact_contract.py outputs/benchmark/smu_headline_v1`. Generated outputs are inspection artifacts, not investment recommendations.
 
-The artifact validator now requires a completed `progress.json`, matching episode files under `episodes/`, trajectory/summary count consistency, audit-candidate count consistency, ticker consistency, and headline metric consistency for action distribution, total reward, non-HOLD action rate, and utility per intervention.
+The artifact validator requires a completed `progress.json`, matching episode files under `episodes/`, trajectory/summary count consistency, audit-candidate count consistency, ticker consistency, and headline metric consistency for action distribution, total reward, non-HOLD action rate, and utility per intervention.
 
 ## Review Artifacts
 
@@ -34,8 +41,8 @@ Reviewer packets include compact JSON evidence columns for market features, tool
 
 ## Readiness Reports
 
-- `outputs/model_preflight.json`: model availability and optional live Responses API quota/authentication preflight.
-- `outputs/benchmark/publication_suite_manifest.json`: dry-run manifest for the planned 54 live publication runs.
-- `outputs/benchmark/publication_suite_summary.json`: current completion summary for the publication suite. It counts only runs with `progress.json` marked complete and `artifact_validation.status=pass`; invalid or partial runs are reported separately.
+- `outputs/model_preflight.json`: committed model-availability report (regenerate with `python scripts/preflight_models.py`).
+- `outputs/benchmark/publication_suite_manifest.json`: committed manifest for the planned 54 live publication runs, of which 18 are complete and committed (regenerate with `python scripts/run_publication_suite.py --dry-run`).
+- `outputs/benchmark/publication_suite_summary.json`: committed completion summary for the publication suite. It counts only runs with `progress.json` marked complete and `artifact_validation.status=pass`; invalid or partial runs are reported separately.
 - `scripts/show_publication_progress.py`: one-command progress view combining readiness checks, suite completion, human-audit completion, and model preflight state.
 - `scripts/check_publication_readiness.py`: reports whether remaining blockers are engineering failures or external blockers.

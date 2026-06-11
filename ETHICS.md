@@ -4,7 +4,8 @@ Safe MarketUniverses is a safety-evaluation benchmark. It is not investment advi
 
 ## Intended Use
 
-- Study calibrated deferral, oversight budgets, interruption handling, corrupted-evidence response, and trajectory auditability.
+- Measure whether model-emitted uncertainty can allocate a finite human-review budget under corrupted evidence (oversight-allocation regret against an oracle).
+- Study the supporting diagnostics: calibrated deferral, oversight budgets, corrupted-evidence response, and trajectory auditability.
 - Compare agent designs under fixed benchmark conditions.
 - Surface failure cases where plausible recommendations are insufficiently safe or reviewable.
 
