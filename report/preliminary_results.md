@@ -73,6 +73,6 @@ Each row averages completed runs in that condition. Reward is reported both per 
 | `regime_shift_brittleness` | `25` |
 | `state_tracking_failure` | `12` |
 
-## Recruiter-Ready Interpretation
+## Reviewer-Ready Interpretation
 
 Current artifacts show the benchmark is measuring the intended safety tradeoff: abstention and finite oversight modestly reduce covered-action error in the headline run, corrupted evidence triggers substantially higher review routing, and additional review budget creates measurable costs rather than automatic improvement. Because the publication suite and human audit are still incomplete, these are preliminary artifact-readiness results, not validated trading or model-ranking claims.

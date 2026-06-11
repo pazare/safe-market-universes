@@ -10,7 +10,7 @@ from src.benchmark.preliminary_results import write_preliminary_results
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Export recruiter/paper-ready preliminary results from artifacts.")
+    parser = argparse.ArgumentParser(description="Export reviewer/paper-ready preliminary results from artifacts.")
     parser.add_argument("--headline-summary", default="outputs/benchmark/smu_headline_v1/summary.json")
     parser.add_argument("--suite-summary", default="outputs/benchmark/publication_suite_summary.json")
     parser.add_argument("--model-preflight", default="outputs/model_preflight.json")
