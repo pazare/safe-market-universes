@@ -15,7 +15,6 @@
 - `REPRODUCIBILITY_CHECKLIST.md`: venue-style reproducibility checklist.
 - `ETHICS.md`: safety, financial-advice, and misuse disclosure.
 - `AI_USE_DISCLOSURE.md`: AI-assistance disclosure for the code and manuscript package.
-- `SUBMISSION_CHECKLIST.md`: reviewer-readiness and release-freeze checklist.
 - `metadata/smu_croissant.json`: Croissant-style metadata and RAI pointers for benchmark artifacts.
 - `CITATION.cff`: citation metadata.
 - `LICENSE`: software license.
