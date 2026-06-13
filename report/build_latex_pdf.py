@@ -8,7 +8,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REPORT_DIR = Path(__file__).resolve().parent
-TECTONIC = Path("/opt/homebrew/bin/tectonic")
 
 
 def _run(command: list[str], *, cwd: Path = REPO_ROOT) -> None:
@@ -16,7 +15,7 @@ def _run(command: list[str], *, cwd: Path = REPO_ROOT) -> None:
 
 
 def main() -> None:
-    tectonic = str(TECTONIC) if TECTONIC.exists() else shutil.which("tectonic")
+    tectonic = shutil.which("tectonic")
     if tectonic is None:
         raise RuntimeError("Tectonic is required to build report/submission_paper.pdf")
 

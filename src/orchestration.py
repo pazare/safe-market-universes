@@ -13,7 +13,7 @@ from .models import BatchSummary, DebateSummary, StockRunOutput
 from .strategy_agents import run_strategy_a, run_strategy_b, run_strategy_c, run_strategy_debate
 
 
-class StockTraderState(TypedDict, total=False):
+class StockAnalysisState(TypedDict, total=False):
     ticker: str
     run_date: str
     model: str | None
@@ -37,7 +37,7 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def _strategy_bundle(state: StockTraderState) -> dict[str, dict[str, Any]]:
+def _strategy_bundle(state: StockAnalysisState) -> dict[str, dict[str, Any]]:
     return {
         "strategy_a": state["strategy_a"],
         "strategy_b": state["strategy_b"],
@@ -45,11 +45,11 @@ def _strategy_bundle(state: StockTraderState) -> dict[str, dict[str, Any]]:
     }
 
 
-def market_data_node(state: StockTraderState) -> StockTraderState:
+def market_data_node(state: StockAnalysisState) -> StockAnalysisState:
     return {"market_data": fetch_market_data(state["ticker"])}
 
 
-def strategy_a_node(state: StockTraderState) -> StockTraderState:
+def strategy_a_node(state: StockAnalysisState) -> StockAnalysisState:
     return {
         "strategy_a": run_strategy_a(
             state["ticker"],
@@ -59,7 +59,7 @@ def strategy_a_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def strategy_b_node(state: StockTraderState) -> StockTraderState:
+def strategy_b_node(state: StockAnalysisState) -> StockAnalysisState:
     return {
         "strategy_b": run_strategy_b(
             state["ticker"],
@@ -69,7 +69,7 @@ def strategy_b_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def strategy_c_node(state: StockTraderState) -> StockTraderState:
+def strategy_c_node(state: StockAnalysisState) -> StockAnalysisState:
     return {
         "strategy_c": run_strategy_c(
             state["ticker"],
@@ -79,15 +79,15 @@ def strategy_c_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def agreement_profile_node(state: StockTraderState) -> StockTraderState:
+def agreement_profile_node(state: StockAnalysisState) -> StockAnalysisState:
     return {"agreement_profile": build_agreement_profile(_strategy_bundle(state))}
 
 
-def evaluator_route(state: StockTraderState) -> str:
+def evaluator_route(state: StockAnalysisState) -> str:
     return "consensus_summary" if state["agreement_profile"]["agents_agree"] else "disagreement_analysis"
 
 
-def consensus_summary_node(state: StockTraderState) -> StockTraderState:
+def consensus_summary_node(state: StockAnalysisState) -> StockAnalysisState:
     return {
         "evaluator": run_evaluator(
             ticker=state["ticker"],
@@ -99,7 +99,7 @@ def consensus_summary_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def disagreement_analysis_node(state: StockTraderState) -> StockTraderState:
+def disagreement_analysis_node(state: StockAnalysisState) -> StockAnalysisState:
     return {
         "evaluator": run_evaluator(
             ticker=state["ticker"],
@@ -111,17 +111,17 @@ def disagreement_analysis_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def post_evaluator_route(state: StockTraderState) -> str:
+def post_evaluator_route(state: StockAnalysisState) -> str:
     if state["agreement_profile"]["agents_agree"] or not state.get("enable_debate", True):
         return "save_output"
     return "debate_dispatch"
 
 
-def debate_dispatch_node(state: StockTraderState) -> StockTraderState:
+def debate_dispatch_node(state: StockAnalysisState) -> StockAnalysisState:
     return {}
 
 
-def debate_a_node(state: StockTraderState) -> StockTraderState:
+def debate_a_node(state: StockAnalysisState) -> StockAnalysisState:
     strategies = _strategy_bundle(state)
     peers = {key: value for key, value in strategies.items() if key != "strategy_a"}
     return {
@@ -136,7 +136,7 @@ def debate_a_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def debate_b_node(state: StockTraderState) -> StockTraderState:
+def debate_b_node(state: StockAnalysisState) -> StockAnalysisState:
     strategies = _strategy_bundle(state)
     peers = {key: value for key, value in strategies.items() if key != "strategy_b"}
     return {
@@ -151,7 +151,7 @@ def debate_b_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def debate_c_node(state: StockTraderState) -> StockTraderState:
+def debate_c_node(state: StockAnalysisState) -> StockAnalysisState:
     strategies = _strategy_bundle(state)
     peers = {key: value for key, value in strategies.items() if key != "strategy_c"}
     return {
@@ -166,7 +166,7 @@ def debate_c_node(state: StockTraderState) -> StockTraderState:
     }
 
 
-def debate_summary_node(state: StockTraderState) -> StockTraderState:
+def debate_summary_node(state: StockAnalysisState) -> StockAnalysisState:
     participants = {
         "strategy_a": state["debate_a"],
         "strategy_b": state["debate_b"],
@@ -194,7 +194,7 @@ def debate_summary_node(state: StockTraderState) -> StockTraderState:
     return {"debate": debate}
 
 
-def save_output_node(state: StockTraderState) -> StockTraderState:
+def save_output_node(state: StockAnalysisState) -> StockAnalysisState:
     record = StockRunOutput(
         ticker=state["ticker"],
         run_date=state["run_date"],
@@ -212,7 +212,7 @@ def save_output_node(state: StockTraderState) -> StockTraderState:
 
 
 def build_graph():
-    graph = StateGraph(StockTraderState)
+    graph = StateGraph(StockAnalysisState)
     graph.add_node("market_data", market_data_node)
     graph.add_node("strategy_a", strategy_a_node)
     graph.add_node("strategy_b", strategy_b_node)
