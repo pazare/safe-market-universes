@@ -146,7 +146,7 @@ The main result supports the narrowed benchmark: corrupted evidence receives far
 - corrupted-evidence steps are not hidden: review rate rises from `10.8%` on clean steps to `77.5%` on corrupted steps
 - corrupted-evidence steps still get worse executed outcomes: executed error rises from `39.8%` on clean steps to `48.4%` on corrupted steps
 - the overseer still has real weaknesses: `7` overreach cases, `4` oversight misses, and `14` budget-limited low-reliability approvals
-- abstention reduces risk modestly overall: `+0.0273` gain versus always acting
+- abstention reduces covered-action risk measurably: `+0.0273` gain overall versus always acting
 - the best abstention operating point reaches `+0.0851` gain at threshold `0.8`
 - the hardest named slices are exactly the unstable ones: `recent_drawdown` and `high_momentum_speculative`
 

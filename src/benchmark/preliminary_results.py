@@ -295,7 +295,7 @@ def render_preliminary_results(report: dict[str, Any]) -> str:
             "",
             "## Interpretation",
             "",
-            "Current artifacts show the benchmark is measuring the intended safety tradeoff: abstention and finite oversight modestly reduce covered-action error in the headline run, corrupted evidence triggers substantially higher review routing, and additional review budget creates measurable costs rather than automatic improvement. Because the publication suite and human audit are still incomplete, these are preliminary artifact-readiness results, not validated trading or model-ranking claims.",
+            "Current artifacts show the benchmark is measuring the intended safety tradeoff: abstention and finite oversight measurably reduce covered-action error in the headline run, corrupted evidence triggers substantially higher review routing, and additional review budget creates measurable costs rather than automatic improvement. Because the publication suite and human audit are still incomplete, these are preliminary artifact-readiness results, not validated trading or model-ranking claims.",
         ]
     )
     return "\n".join(lines) + "\n"
