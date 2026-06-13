@@ -223,7 +223,7 @@ The canonical headline run at `outputs/benchmark/smu_headline_v1/summary.json` i
 
 ### 5.2 Frozen Matrix Outcome
 
-The frozen tuning matrix at `outputs/benchmark/smu_tuning_matrix_v1/matrix_summary.json` remains the policy-selection artifact. It sweeps budgets `0`, `1`, and `2` across clean and corrupted conditions for `COST`, `JNJ`, `HIMS`, and `TSLA`, then compares the tuned policy against the older baseline `smu_validation_v4`.
+The frozen tuning matrix is the policy-selection analysis. It sweeps budgets `0`, `1`, and `2` across clean and corrupted conditions for `COST`, `JNJ`, `HIMS`, and `TSLA`, then compares the tuned policy against the older baseline `smu_validation_v4`. Its per-cell summary is a development artifact and is not committed to the published repository.
 
 Relative to `smu_validation_v4`, the tuned matrix showed:
 
