@@ -141,10 +141,10 @@ Those scripts are intentionally lightweight and produce reviewer-facing summarie
 
 The current strongest empirical artifact is the canonical headline run at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json). It contains `120` episodes, `480` decision steps, `12` tickers, corrupted-evidence events, a budget-1 overseer, and sampled model-based quality judging. Two provenance notes for anyone cross-checking the artifact: the run predates the flagship narrowing, so its embedded `thesis` string reflects the earlier, broader framing (the oversight-allocation analysis is computed from its logs by `scripts/export_oversight_allocation.py`), and its `benchmark_config.json` records `model: null`, which means the environment-default model — `gpt-5.4-mini` — was used.
 
-The main result supports the narrowed benchmark: corrupted evidence receives far more review, but the system still does not become robust to corruption.
+The flagship result is the oversight-allocation regret in the [Key Finding](#key-finding) above: model-emitted uncertainty allocates review near random. The headline run also yields the supporting diagnostics below. As the scope note above flags, the first two bullets are a **harness diagnostic, not a model capability** — the overseer escalates on the visible corruption warnings the harness itself injects, so the routing lift mostly measures the harness.
 
-- corrupted-evidence steps are not hidden: review rate rises from `10.8%` on clean steps to `77.5%` on corrupted steps
-- corrupted-evidence steps still get worse executed outcomes: executed error rises from `39.8%` on clean steps to `48.4%` on corrupted steps
+- harness diagnostic — corrupted-evidence steps draw far more review (the overseer reacts to injected warnings): review rate rises from `10.8%` on clean steps to `77.5%` on corrupted steps
+- harness diagnostic — corrupted-evidence steps still get worse executed outcomes: executed error rises from `39.8%` on clean steps to `48.4%` on corrupted steps
 - the overseer still has real weaknesses: `7` overreach cases, `4` oversight misses, and `14` budget-limited low-reliability approvals
 - abstention reduces covered-action risk measurably: `+0.0273` gain overall versus always acting
 - the best abstention operating point reaches `+0.0851` gain at threshold `0.8`

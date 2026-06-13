@@ -26,7 +26,7 @@ The headline allocator, **model-signal**, ranks steps using *only* the committee
 
 On 120 episodes / 480 steps, the benchmark cleanly separates the hand-coded baseline from the other two allocators — and the model's own signal lands near random. Regret per step at K=1:
 
-- **0.091** — a hand-coded evidence-integrity rule (a strong reference: it has privileged access to the injected corruption markers).
+- **0.091** — a hand-coded evidence-integrity rule (a strong reference: a hand-coded heuristic that reacts to the visible corruption warnings and a reliability score, catching under half of the corrupted steps).
 - **0.176** — the model's own uncertainty signal.
 - **0.191** — random.
 
