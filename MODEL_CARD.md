@@ -8,6 +8,8 @@ The default publication matrix uses three OpenAI models configured in `benchmark
 - `gpt-5.4` (`strong_generalist`): strong general-purpose baseline.
 - `gpt-5.5` (`frontier_reference`): frontier reference model.
 
+**Completed coverage in this release.** Only `gpt-5.4-mini` has committed runs, covering 18 of its 18 grid cells. The `gpt-5.4` and `gpt-5.5` arms are at 0 of 18: the first `gpt-5.4` cell failed on `external_api_insufficient_quota` and the remaining cells were not run. All headline results derive from the single `gpt-5.4-mini` generator by design. The three-model matrix described here and below is the planned suite, not completed coverage, and a preflight reporting a model as `available` means it was reachable, not that its cells were evaluated.
+
 Model availability is checked before expensive runs. If a model is unavailable to the executing account, the run records `model_unavailable` and does not silently substitute another model.
 
 ## Model Role
@@ -25,11 +27,13 @@ python scripts/preflight_models.py --live-response-check
 
 The report is written to `outputs/model_preflight.json`. The plain preflight checks configured model availability. The live response check additionally makes one minimal Responses API call per configured model so authentication and quota failures are caught before a long benchmark cell starts. Unavailable or quota-blocked models are recorded and excluded from aggregate publication claims unless explicitly replaced and disclosed.
 
-The canonical publication suite is a planned `3 x 3 x 3 x 2` grid: three configured models, three seeds, oversight budgets `0/1/2`, and corruption off/on. The committed manifest lives at `outputs/benchmark/publication_suite_manifest.json` and can be regenerated without API calls:
+The canonical publication suite is a planned `3 x 3 x 3 x 2` grid: three configured models, three seeds, oversight budgets `0/1/2`, and corruption off/on. The planned matrix and its per-cell status fields can be regenerated without API calls:
 
 ```bash
 python scripts/run_publication_suite.py --dry-run
 ```
+
+The committed `outputs/benchmark/publication_suite_manifest.json` is a live-run provenance record that carries the real preflight results, so it is not reproduced byte-for-byte by `--dry-run`, which records the planned cells with a `not_checked` status instead of live availability.
 
 ## Known Limitations
 
