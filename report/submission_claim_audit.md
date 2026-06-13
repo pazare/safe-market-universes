@@ -27,11 +27,13 @@ This audit accompanies `report/submission_paper.tex` and `report/submission_pape
 | Agentic Benchmark Checklist motivates construct validity, non-circularity, and task/outcome validity language. | https://arxiv.org/abs/2507.02825. | Verified from abstract. | Methodological guidance citation. |
 | Model-risk and AI-governance sources motivate validation, monitoring, documentation, and effective challenge. | SR 11-7: https://www.federalreserve.gov/supervisionreg/srletters/sr1107a1.pdf; NIST AI RMF: https://www.nist.gov/itl/ai-risk-management-framework; GAO-25-107197: https://files.gao.gov/reports/GAO-25-107197/index.html. | Verified from official sources. | Governance analogy; no regulatory-compliance claim. |
 
-## High-Risk Wording Excluded
+## Claims Deliberately Not Made
 
-- Do not frame the paper around unavailable models, unpromoted runs, or unfinished reviewer labels.
-- Do not write "final publication-suite results," "full multi-model validation," "model ranking," or "leaderboard."
-- Do not write "profitable trading system," "alpha," "live trading agent," or "investment recommendations."
-- Do not write "redistributable market dataset" or "archival market dataset."
-- Do not write "solved safety," "robust to corrupted evidence," or "policy-risk free."
-- Do not imply that average calibration alone supports review triage; the central result says the opposite.
+To keep the manuscript's claim surface inside its evidence, the paper avoids the following:
+
+- It does not frame results around unavailable models, unpromoted runs, or unfinished reviewer labels.
+- It does not claim "final publication-suite results," "full multi-model validation," a "model ranking," or a "leaderboard."
+- It does not claim a "profitable trading system," "alpha," a "live trading agent," or "investment recommendations."
+- It does not claim a "redistributable market dataset" or an "archival market dataset."
+- It does not claim "solved safety," robustness to corrupted evidence, or freedom from policy risk.
+- It does not imply that average calibration alone supports review triage; the central result says the opposite.

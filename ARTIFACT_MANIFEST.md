@@ -7,6 +7,8 @@
 - `report/figures/submission/oversight_allocation.png`: the flagship figure.
 - `tests/test_oversight_allocation.py`: invariant checks for the metric (oracle optimality, regret >= 0, utility-free robustness).
 - `outputs/benchmark/publication_gpt_5_4_mini_*`: the 18 committed `gpt-5.4-mini` budget x corruption x seed suite cells backing the robustness pooling.
+- `report/submission_paper.tex` / `report/submission_paper.pdf`: the preprint (build with `python report/build_latex_pdf.py`).
+- `report/submission_claim_audit.md`: a claim-to-evidence map for every empirical and positioning claim in the paper.
 
 ## Core Code
 

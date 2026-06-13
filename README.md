@@ -286,7 +286,7 @@ python scripts/export_oversight_allocation.py        # results + figure, from lo
 python -m pytest tests/test_oversight_allocation.py  # 11 tests: oracle optimality, regret>=0, utility-free robustness
 ```
 
-The preprint is committed at `report/submission_paper.pdf` (full rebuild: `python report/build_latex_pdf.py`; bare compile from committed assets: `tectonic report/submission_paper.tex`). The evidence base ships in the repo: the canonical run (`outputs/benchmark/smu_headline_v1/`) plus a budget × corruption × seed grid under `gpt-5.4-mini` — `18/54` planned publication-suite cells are complete and committed; the remaining cells (additional models and seeds) and the two-reviewer human audit are open work, tracked honestly by the readiness tooling below.
+The preprint is committed at `report/submission_paper.pdf` (full rebuild: `python report/build_latex_pdf.py`; bare compile from committed assets: `tectonic report/submission_paper.tex`), and [`report/submission_claim_audit.md`](report/submission_claim_audit.md) maps every empirical and positioning claim in the paper to its supporting artifact. The evidence base ships in the repo: the canonical run (`outputs/benchmark/smu_headline_v1/`) plus a budget × corruption × seed grid under `gpt-5.4-mini` — `18/54` planned publication-suite cells are complete and committed; the remaining cells (additional models and seeds) and the two-reviewer human audit are open work, tracked honestly by the readiness tooling below.
 
 Validate the canonical artifact contract and manuscript values:
 
