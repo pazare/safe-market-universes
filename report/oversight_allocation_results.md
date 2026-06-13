@@ -1,6 +1,6 @@
 # Safe MarketUniverses — Flagship Results: Misspent Oversight
 
-**Flagship question.** Given a finite budget of K human-review tokens per episode, does the model's own expressed uncertainty allocate them to the decisions that actually warrant review when evidence may be corrupted? We report regret against an oracle that spends the same K optimally (computable from hindsight utilities the model never sees).
+**Flagship question.** Whether, given a finite budget of human-review tokens per episode, the model's own expressed uncertainty allocates them to the decisions that actually warrant review when evidence may be corrupted. We report regret against an oracle that spends the same budget optimally, computable from hindsight utilities the model never sees.
 
 Primary evidence: headline run with 120 episodes / 480 steps. Robustness: 2160 pooled episodes across the 18 validated `gpt-5.4-mini` cells.
 
@@ -11,7 +11,7 @@ Primary evidence: headline run with 120 episodes / 480 steps. Robustness: 2160 p
 
 The heuristic-reliability ECE measures the hand-coded reliability formula, not the model; committee-confidence ECE is the model-intrinsic calibration measure and is the one reported here.
 
-## Allocation regret per step (lower is better; oracle = 0)
+## Allocation regret per step (lower is better; the oracle scores zero)
 
 | Allocator | K=1 regret | K=2 regret | K=1 precision@K | K=2 precision@K |
 | --- | ---: | ---: | ---: | ---: |
@@ -21,7 +21,7 @@ The heuristic-reliability ECE measures the hand-coded reliability formula, not t
 
 ## Robustness: 0/1 utility-free oracle (review-worthy iff committee majority wrong)
 
-Binary regret/step (lower is better) under an oracle that ignores utility magnitudes — confirms the ranking is not an artifact of the utility scale.
+Binary regret/step (lower is better) under an oracle that ignores utility magnitudes. The ranking changes under this objective: the hand-coded rule becomes the worst allocator, so the graded-oracle ranking reflects the utility weighting, and the objective-independent takeaway is that no fixed signal here approaches the oracle.
 
 | Allocator | K=1 | K=2 |
 | --- | ---: | ---: |
@@ -43,13 +43,13 @@ Binary regret/step (lower is better) under an oracle that ignores utility magnit
 | 1 | `0.2821` | `0.2281` |
 | 2 | `0.4744` | `0.5965` |
 
-## Robustness: per-seed model_signal regret (pooled cells, K=1)
+## Robustness: per-seed model_signal regret (pooled cells, one-token budget)
 
-Per-seed regret/step: `20260414`=0.1742, `20260415`=0.1771, `20260416`=0.1735 (mean `0.1749`, range `0.0036`).
+Per-seed regret per step is `0.1742` for seed `20260414`, `0.1771` for seed `20260415`, `0.1735` for seed `20260416`; the mean is `0.1749` and the seed-to-seed range is `0.0036`.
 
 ## Validity notes
 
-- Oracle is greedy-optimal under a cardinality budget; regret >= 0 by construction.
+- Oracle is greedy-optimal under a cardinality budget; regret is never negative by construction.
 - model_signal uses only committee confidence/verification_need/disagreement; it never reads overseer rules or action_utilities.
 - Model is blind to action_utilities (hindsight), so the measurement is non-circular.
 - Trajectories were generated under a rule-based overseer (scaffold-conditioned); this measures the quality of the model's uncertainty as an allocation signal, not online agency.

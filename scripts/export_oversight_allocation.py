@@ -118,7 +118,7 @@ def render_figure(report: dict[str, Any], output_path: Path) -> None:
     ax2.set_yticks(np.linspace(0, 1, 6))
     ax2.set_yticklabels([f"{int(v*100)}%" for v in np.linspace(0, 1, 6)])
     ax2.set_ylabel("Recall of review-worthy steps")
-    ax2.set_title("Does the model catch corrupted-evidence risk?")
+    ax2.set_title("Recall of review-worthy steps: clean vs. corrupted")
     ax2.legend(loc="best", fontsize=8)
     ax2.grid(axis="y", alpha=0.25)
 
@@ -143,10 +143,10 @@ def render_markdown(headline: dict[str, Any], suite: dict[str, Any], per_seed: d
     lines = [
         "# Safe MarketUniverses — Flagship Results: Misspent Oversight",
         "",
-        "**Flagship question.** Given a finite budget of K human-review tokens per episode, "
-        "does the model's own expressed uncertainty allocate them to the decisions that actually "
-        "warrant review when evidence may be corrupted? We report regret against an oracle that "
-        "spends the same K optimally (computable from hindsight utilities the model never sees).",
+        "**Flagship question.** Whether, given a finite budget of human-review tokens per episode, "
+        "the model's own expressed uncertainty allocates them to the decisions that actually "
+        "warrant review when evidence may be corrupted. We report regret against an oracle that "
+        "spends the same budget optimally, computable from hindsight utilities the model never sees.",
         "",
         f"Primary evidence: headline run with {headline['episodes']} episodes / {headline['steps']} steps. "
         f"Robustness: {suite['episodes']} pooled episodes across the 18 validated `gpt-5.4-mini` cells.",
@@ -159,7 +159,7 @@ def render_markdown(headline: dict[str, Any], suite: dict[str, Any], per_seed: d
         "The heuristic-reliability ECE measures the hand-coded reliability formula, not the model; "
         "committee-confidence ECE is the model-intrinsic calibration measure and is the one reported here.",
         "",
-        "## Allocation regret per step (lower is better; oracle = 0)",
+        "## Allocation regret per step (lower is better; the oracle scores zero)",
         "",
         "| Allocator | " + " | ".join(f"K={b} regret" for b in headline["budgets"]) + " | "
         + " | ".join(f"K={b} precision@K" for b in headline["budgets"]) + " |",
@@ -178,7 +178,7 @@ def render_markdown(headline: dict[str, Any], suite: dict[str, Any], per_seed: d
         "",
         "## Robustness: 0/1 utility-free oracle (review-worthy iff committee majority wrong)",
         "",
-        "Binary regret/step (lower is better) under an oracle that ignores utility magnitudes — confirms the ranking is not an artifact of the utility scale.",
+        "Binary regret/step (lower is better) under an oracle that ignores utility magnitudes. The ranking changes under this objective: the hand-coded rule becomes the worst allocator, so the graded-oracle ranking reflects the utility weighting, and the objective-independent takeaway is that no fixed signal here approaches the oracle.",
         "",
         "| Allocator | " + " | ".join(f"K={b}" for b in headline["budgets"]) + " |",
         "|" + " --- |" + " ---: |" * len(headline["budgets"]),
@@ -217,10 +217,11 @@ def render_markdown(headline: dict[str, Any], suite: dict[str, Any], per_seed: d
 
     lines += [
         "",
-        "## Robustness: per-seed model_signal regret (pooled cells, K=1)",
+        "## Robustness: per-seed model_signal regret (pooled cells, one-token budget)",
         "",
-        f"Per-seed regret/step: " + ", ".join(f"`{seed}`={_fmt(v)}" for seed, v in per_seed["by_seed"].items())
-        + f" (mean `{_fmt(per_seed['mean'])}`, range `{_fmt(per_seed['range'])}`).",
+        "Per-seed regret per step is "
+        + ", ".join(f"`{_fmt(v)}` for seed `{seed}`" for seed, v in per_seed["by_seed"].items())
+        + f"; the mean is `{_fmt(per_seed['mean'])}` and the seed-to-seed range is `{_fmt(per_seed['range'])}`.",
         "",
         "## Validity notes",
         "",

@@ -463,7 +463,7 @@ def build_oversight_allocation_report(
             "heuristic_reliability_ece": heuristic_reliability_ece(records),
         },
         "notes": [
-            "Oracle is greedy-optimal under a cardinality budget; regret >= 0 by construction.",
+            "Oracle is greedy-optimal under a cardinality budget; regret is never negative by construction.",
             "model_signal uses only committee confidence/verification_need/disagreement; it never reads overseer rules or action_utilities.",
             "Model is blind to action_utilities (hindsight), so the measurement is non-circular.",
             "Trajectories were generated under a rule-based overseer (scaffold-conditioned); this measures the quality of the model's uncertainty as an allocation signal, not online agency.",

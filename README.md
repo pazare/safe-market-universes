@@ -1,14 +1,14 @@
 # Safe MarketUniverses
 
-Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **can model-emitted uncertainty signals ration scarce human review under corrupted evidence?** It scores allocators by **regret against an oracle** that spends the same review budget optimally from hindsight utilities the model never sees, so the metric isolates the model signal rather than the harness.
+Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **whether model-emitted uncertainty signals can ration scarce human review under corrupted evidence.** It scores allocators by **regret against an oracle** that spends the same review budget optimally from hindsight utilities the model never sees, so the metric isolates the model signal rather than the harness.
 
 This is a safety-evaluation artifact, not a trading system and not investment advice. Finance is the testbed because evidence integrity, uncertainty, disagreement, and review cost are visible in a compact domain.
 
 ## Key Finding
 
-On the canonical run (120 episodes / 480 steps, single generator by design: a `gpt-5.4-mini` committee), the benchmark cleanly separates the hand-coded baseline from the other two allocators — and the model's own signal lands near random. Regret per step at K=1 is **0.091** for a hand-coded evidence-integrity baseline, **0.176** for model-emitted confidence and verification signals, and **0.191** for random. The takeaway is decision-relevant: relatively good average calibration (**committee-confidence ECE 0.102**) does not imply good allocation of scarce review. In short: **average calibration is not review triage**. Across three logged seed groups, model-signal regret varies by **0.004**. A utility-free robustness oracle confirms the model-near-random conclusion and shows that the rule baseline's graded-oracle edge depends on the utility scale.
+On the canonical run (120 episodes and 480 steps, single generator by design: a `gpt-5.4-mini` committee), the benchmark cleanly separates the hand-coded baseline from the other two allocators, and the model's own signal lands near random. Regret per step at a budget of one review token per episode is **0.091** for a hand-coded evidence-integrity baseline, **0.176** for model-emitted confidence and verification signals, and **0.191** for random. The takeaway is decision-relevant: relatively good average calibration, with a committee-confidence ECE of **0.102**, does not imply good allocation of scarce review. In short: **average calibration is not review triage**. Across three logged seed groups, model-signal regret varies by **0.004**. Re-scoring against a utility-free oracle changes the ranking rather than confirming it: the hand-coded rule becomes the worst allocator, so its graded-oracle edge reflects the utility weighting, and the robust takeaway is that no fixed signal here approaches the oracle.
 
-![Oversight-allocation regret against budget K, with corruption-split recall](report/figures/submission/oversight_allocation.png)
+![Oversight-allocation regret against the review budget, with corruption-split recall](report/figures/submission/oversight_allocation.png)
 
 Regenerate every number and the figure from the logs (no model calls needed):
 
@@ -28,9 +28,9 @@ Most agent demos are judged by surface plausibility: the answer sounds reasonabl
 
 The supporting diagnostics are deliberately subordinate to that flagship construct:
 
-- calibration: does committee confidence track realized correctness closely enough to be useful as an allocation signal?
-- selective action: does the system defer or verify instead of forcing every low-reliability case into BUY/HOLD/SELL?
-- auditability: does the run preserve enough evidence for a reviewer to challenge each approval, miss, or overreach?
+- calibration: whether committee confidence tracks realized correctness closely enough to be useful as an allocation signal
+- selective action: whether the system defers or verifies instead of forcing every low-reliability case into a directional BUY, HOLD, or SELL
+- auditability: whether the run preserves enough evidence for a reviewer to challenge each approval, miss, or overreach
 
 Finance is the testbed, not the only point. The same structure applies to any tool-using agent that must make sequential recommendations from uncertain evidence while paying for review.
 
@@ -286,7 +286,7 @@ python scripts/export_oversight_allocation.py        # results + figure, from lo
 python -m pytest tests/test_oversight_allocation.py  # 11 tests: oracle optimality, regret>=0, utility-free robustness
 ```
 
-The preprint is committed at `report/submission_paper.pdf` (full rebuild: `python report/build_latex_pdf.py`; bare compile from committed assets: `tectonic report/submission_paper.tex`), and [`report/submission_claim_audit.md`](report/submission_claim_audit.md) maps every empirical and positioning claim in the paper to its supporting artifact. The evidence base ships in the repo: the canonical run (`outputs/benchmark/smu_headline_v1/`) plus a budget × corruption × seed grid under `gpt-5.4-mini` — `18/54` planned publication-suite cells are complete and committed; the remaining cells (additional models and seeds) and the two-reviewer human audit are open work, tracked honestly by the readiness tooling below.
+The preprint is committed at `report/submission_paper.pdf` (full rebuild: `python report/build_latex_pdf.py`; bare compile from committed assets: `tectonic report/submission_paper.tex`), and [`report/submission_claim_audit.md`](report/submission_claim_audit.md) maps every empirical and positioning claim in the paper to its supporting artifact. The evidence base ships in the repo: the canonical run (`outputs/benchmark/smu_headline_v1/`) plus a grid over oversight budgets, corruption on and off, and seeds under `gpt-5.4-mini` — `18/54` planned publication-suite cells are complete and committed; the remaining cells (additional models and seeds) and the two-reviewer human audit are open work, tracked honestly by the readiness tooling below.
 
 Validate the canonical artifact contract and manuscript values:
 
