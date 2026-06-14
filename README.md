@@ -6,13 +6,13 @@ This is a safety-evaluation artifact, not a trading system and not investment ad
 
 ## Key Finding
 
-The benchmark asks a single question: given a fixed budget of human-review tokens, which of an agent's sequential decisions should a person check? Each allocation rule is scored by its **regret** against a hindsight oracle that, knowing which decisions actually turned out wrong, spends the same review budget perfectly. Regret is never negative, and lower is better. The flagship allocator is deliberately constrained to use only the model's own emitted signals (committee confidence, verification-need, and disagreement), never the hand-coded inspection rules.
+The benchmark asks one question: given a fixed budget of human-review tokens, which of an agent's sequential decisions should a person check? It scores each rule by its **regret** against a hindsight oracle that, knowing which decisions turned out wrong, spends the same budget perfectly. Regret is never negative, and lower is better. The flagship rule uses only the model's own signals (committee confidence, verification-need, and disagreement), never the hand-coded inspection rules.
 
-The robust takeaway comes first: on the canonical run (120 episodes, 480 steps, a budget of one review per episode, single generator by design — a `gpt-5.4-mini` committee), the model's own uncertainty signal rations scarce review no better than chance. Regret per step is **0.176** for the model's own confidence and verification signals, against **0.191** for random allocation. Across the three logged seed groups, the model-signal regret varies by only about **0.004**, so that result is stable, not noise.
+The robust result is the headline. On the canonical run (120 episodes, 480 steps, one review per episode, a single `gpt-5.4-mini` committee by design), the model's own uncertainty signal rations scarce review no better than chance. Regret per step is **0.176** for the model's own confidence and verification signals, against **0.191** for random allocation. The model-signal regret varies by only about **0.004** across the three logged seed groups, so the result is stable, not noise.
 
-A hand-coded evidence-integrity rule scores **0.091**, which at first looks like a decisive win over the model's own confidence. That apparent edge is fragile, because it depends entirely on how cases are weighted, and the benchmark scores the same runs two ways. The **value-weighted** scoring (the primary one) weights each case by how much utility is at stake, so missing a high-stakes wrong decision counts for more than missing a low-stakes one; under it the hand-coded rule wins at **0.091**. A simpler **equal-weight** scoring throws away the value magnitudes and asks only whether the rule flagged the decisions the agent actually got wrong, with every wrong decision counting the same; under it the *same* hand-coded rule becomes the **worst** of the three. Because the ranking flips depending on which scoring you choose, the hand rule's lead is an artifact of the value weighting rather than a real ability to find errors, and no fixed signal here reliably approaches the oracle.
+A hand-coded evidence-integrity rule scores **0.091**, which looks at first like a decisive win over the model's confidence. That edge is fragile. It depends entirely on how cases are weighted, and the benchmark scores the same runs two ways. The **value-weighted** scoring, the primary one, weights each case by how much utility is at stake, so missing a high-stakes wrong decision counts for more than missing a low-stakes one. Under it the hand-coded rule wins at **0.091**. A simpler **equal-weight** scoring discards the magnitudes and asks only whether the rule flagged the decisions the agent got wrong, counting every wrong decision the same. Under it the same hand-coded rule becomes the **worst** of the three. The ranking flips with the scoring, so the hand rule's lead is an artifact of the weighting, not a real ability to find errors, and no fixed signal here reliably approaches the oracle.
 
-The durable lessons survive both scorings. First, the model's own confidence locates its own errors no better than chance — it stays near the random baseline under both the value-weighted and the equal-weight scoring. Second, average calibration is not review triage. The committee is reasonably calibrated on average, with an expected-calibration error (ECE) of **0.102**, yet that average tells it only roughly how often it is right overall — it never tells it which individual decision a person should actually check. Knowing your aggregate hit rate is not the same as knowing which case you got wrong.
+Two lessons survive both scorings. First, the model's own confidence locates its errors no better than chance, staying near the random baseline under each scoring. Second, average calibration is not review triage. The committee is reasonably calibrated on average, with an expected-calibration error (ECE) of **0.102**, yet that average reports only how often it is right overall. It never says which individual decision a person should check. Knowing your aggregate hit rate is not knowing which case you got wrong.
 
 ![Oversight-allocation regret against the review budget, with corruption-split recall](report/figures/submission/oversight_allocation.png)
 
@@ -24,7 +24,7 @@ python -m pytest tests/test_oversight_allocation.py   # 11 tests checking the me
 ```
 
 - Paper: [`report/submission_paper.tex`](report/submission_paper.tex) and [`report/submission_paper.pdf`](report/submission_paper.pdf) (build: `python report/build_latex_pdf.py`, or `tectonic report/submission_paper.tex` to compile from the committed assets)
-- Write-up: [`report/blog_misspent_oversight.md`](report/blog_misspent_oversight.md) — how I caught the benchmark grading itself, and the fix.
+- Write-up: [`report/blog_misspent_oversight.md`](report/blog_misspent_oversight.md), covering how I caught the benchmark grading itself, and the fix.
 
 > **Scope note.** An earlier version of this benchmark reported corruption-conditioned review routing (review rate rising from 10.8% on clean steps to 77.5% on corrupted steps) as its headline. That number mostly measures the harness's own injected corruption markers, so it was demoted to a diagnostic and the metric was rebuilt around oracle regret; the write-up above documents the catch. The flagship metric is model-intrinsic by design: it scores model-emitted uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline.
 
@@ -145,12 +145,12 @@ Those scripts are intentionally lightweight and produce reviewer-facing summarie
 
 ## Current Status
 
-The current strongest empirical artifact is the canonical headline run at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json). It contains `120` episodes, `480` decision steps, `12` tickers, corrupted-evidence events, a budget-1 overseer, and sampled model-based quality judging. Two provenance notes for anyone cross-checking the artifact: the run predates the flagship narrowing, so its embedded `thesis` string reflects the earlier, broader framing (the oversight-allocation analysis is computed from its logs by `scripts/export_oversight_allocation.py`), and its `benchmark_config.json` records `model: null`, which means the environment-default model — `gpt-5.4-mini` — was used.
+The current strongest empirical artifact is the canonical headline run at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json). It contains `120` episodes, `480` decision steps, `12` tickers, corrupted-evidence events, a budget-1 overseer, and sampled model-based quality judging. Two provenance notes for anyone cross-checking the artifact: the run predates the flagship narrowing, so its embedded `thesis` string reflects the earlier, broader framing (the oversight-allocation analysis is computed from its logs by `scripts/export_oversight_allocation.py`), and its `benchmark_config.json` records `model: null`, which means the environment-default model, `gpt-5.4-mini`, was used.
 
-The flagship result is the oversight-allocation regret in the [Key Finding](#key-finding) above: model-emitted uncertainty allocates review near random. The headline run also yields the supporting diagnostics below. As the scope note above flags, the first two bullets are a **harness diagnostic, not a model capability** — the overseer escalates on the visible corruption warnings the harness itself injects, so the routing lift mostly measures the harness.
+The flagship result is the oversight-allocation regret in the [Key Finding](#key-finding) above: model-emitted uncertainty allocates review near random. The headline run also yields the supporting diagnostics below. As the scope note above flags, the first two bullets are a **harness diagnostic, not a model capability**. The overseer escalates on the visible corruption warnings the harness itself injects, so the routing lift mostly measures the harness.
 
-- harness diagnostic — corrupted-evidence steps draw far more review (the overseer reacts to injected warnings): review rate rises from `10.8%` on clean steps to `77.5%` on corrupted steps
-- harness diagnostic — corrupted-evidence steps still get worse executed outcomes: executed error rises from `39.8%` on clean steps to `48.4%` on corrupted steps
+- harness diagnostic: corrupted-evidence steps draw far more review (the overseer reacts to injected warnings): review rate rises from `10.8%` on clean steps to `77.5%` on corrupted steps
+- harness diagnostic: corrupted-evidence steps still get worse executed outcomes: executed error rises from `39.8%` on clean steps to `48.4%` on corrupted steps
 - the overseer still has real weaknesses: `7` overreach cases, `4` oversight misses, and `14` budget-limited low-reliability approvals
 - abstention reduces covered-action risk measurably: `+0.0273` gain overall versus always acting
 - the best abstention operating point reaches `+0.0851` gain at threshold `0.8`
@@ -189,7 +189,7 @@ The full headline run includes `84` residual mixed-transition steps with `48.8%`
 
 ## Provenance
 
-Safe MarketUniverses began as a multi-agent stock-analysis project: a three-agent committee (momentum, value-contrarian, volatility-averse) with disagreement-triggered debate and a historical backtest. That committee pipeline survives as the benchmark's recommendation substrate — it is the source of the confidence, verification-need, and disagreement signals the flagship metric scores. The original workflow still runs (see [Run The Committee Workflow](#run-the-committee-workflow)), but the benchmark, not the stock analysis, is the contribution.
+Safe MarketUniverses began as a multi-agent stock-analysis project: a three-agent committee (momentum, value-contrarian, volatility-averse) with disagreement-triggered debate and a historical backtest. That committee pipeline survives as the benchmark's recommendation substrate. It is the source of the confidence, verification-need, and disagreement signals the flagship metric scores. The original workflow still runs (see [Run The Committee Workflow](#run-the-committee-workflow)), but the benchmark, not the stock analysis, is the contribution.
 
 ## Setup
 
@@ -285,14 +285,14 @@ python scripts/run_tuning_matrix.py \
 
 ## Reproduce & Validate
 
-Regenerate the flagship result, figure, and tables from the committed logs — no model calls:
+Regenerate the flagship result, figure, and tables from the committed logs, with no model calls:
 
 ```bash
 python scripts/export_oversight_allocation.py        # results + figure, from logs
 python -m pytest tests/test_oversight_allocation.py  # 11 tests: oracle optimality, regret>=0, utility-free robustness
 ```
 
-The preprint is committed at `report/submission_paper.pdf` (full rebuild: `python report/build_latex_pdf.py`; bare compile from committed assets: `tectonic report/submission_paper.tex`), and [`report/submission_claim_audit.md`](report/submission_claim_audit.md) maps every empirical and positioning claim in the paper to its supporting artifact. The evidence base ships in the repo: the canonical run (`outputs/benchmark/smu_headline_v1/`) plus a grid over oversight budgets, corruption on and off, and seeds under `gpt-5.4-mini` — `18/54` planned publication-suite cells are complete and committed; the remaining cells (additional models and seeds) and the two-reviewer human audit are open work, tracked honestly by the readiness tooling below.
+The preprint is committed at `report/submission_paper.pdf` (full rebuild: `python report/build_latex_pdf.py`; bare compile from committed assets: `tectonic report/submission_paper.tex`), and [`report/submission_claim_audit.md`](report/submission_claim_audit.md) maps every empirical and positioning claim in the paper to its supporting artifact. The evidence base ships in the repo: the canonical run (`outputs/benchmark/smu_headline_v1/`) plus a grid over oversight budgets, corruption on and off, and seeds under `gpt-5.4-mini`. `18/54` planned publication-suite cells are complete and committed; the remaining cells (additional models and seeds) and the two-reviewer human audit are open work, tracked honestly by the readiness tooling below.
 
 Validate the canonical artifact contract and manuscript values:
 
