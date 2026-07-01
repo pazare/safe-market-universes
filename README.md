@@ -1,8 +1,22 @@
 # Safe MarketUniverses
 
+> **Plain-English summary.** The committee model looked well-calibrated on average (expected calibration error `0.102`), yet its confidence rationed scarce human review no better than chance: regret `0.176` per step against `0.191` for random allocation, while a hand-coded evidence-integrity rule reached `0.091`. Average calibration is not review triage. The model-signal rule was fixed before scoring: a pre-registered prediction, reported as a loss.
+
 Safe MarketUniverses is a benchmark for one **model-intrinsic** question: **whether model-emitted uncertainty signals can ration scarce human review under corrupted evidence.** It scores allocators by **regret against an oracle** that spends the same review budget optimally from hindsight utilities the model never sees, so the metric isolates the model signal rather than the harness.
 
 This is a safety-evaluation artifact, not a trading system and not investment advice. Finance is the testbed because evidence integrity, uncertainty, disagreement, and review cost are visible in a compact domain.
+
+**Every headline number in this README regenerates from the committed episode logs, with no model calls and no API keys:** `python scripts/export_oversight_allocation.py`.
+
+## Quick Start
+
+Install, regenerate the flagship numbers from the committed episode data, and smoke-test the harness. No API key is required for any of the three:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
+python scripts/export_oversight_allocation.py   # -> report/oversight_allocation_results.{md,json} + figure, from the committed logs
+python scripts/run_smoke_benchmark.py           # mocked end-to-end smoke run, no model calls
+```
 
 ## Key Finding
 
