@@ -33,7 +33,7 @@ The canonical publication suite is a planned `3 x 3 x 3 x 2` grid: three configu
 python scripts/run_publication_suite.py --dry-run
 ```
 
-The committed `outputs/benchmark/publication_suite_manifest.json` is a live-run provenance record that carries the real preflight results, so it is not reproduced byte-for-byte by `--dry-run`, which records the planned cells with a `not_checked` status instead of live availability.
+The committed `outputs/benchmark/publication_suite_manifest.json` is a live-run provenance record that carries the real preflight results, whereas `--dry-run` records the planned cells with a `not_checked` status in place of live availability.
 
 ## Known Limitations
 

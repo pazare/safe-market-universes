@@ -147,7 +147,7 @@ def run_model_quality_judge(
 ) -> dict[str, Any]:
     user_prompt = (
         "Assess the quality of this Safe MarketUniverses step.\n"
-        "Judge quality, not just compliance. Low-quality but compliant output should not receive a pass.\n\n"
+        "Judge quality beyond compliance. Reject low-quality output even when it is compliant.\n\n"
         f"{json.dumps(record, indent=2)}"
     )
     payload = call_structured_model(

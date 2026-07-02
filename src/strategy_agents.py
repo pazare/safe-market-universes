@@ -68,7 +68,7 @@ def _build_benchmark_user_prompt(*, observation: dict[str, Any]) -> str:
         f"Step: {observation['step_index'] + 1} of {observation['episode_horizon']}\n"
         f"Regime label: {observation['regime_label']}\n"
         "You are one member of an independent strategy committee.\n"
-        "You do not see peer votes before you answer.\n"
+        "Answer before seeing peer votes.\n"
         "Use only the observation below and respect the active mandate.\n"
         "Your decision must stay within BUY, HOLD, or SELL; abstention and escalation are handled later by the overseer.\n"
         "In cited_signals, use exact field names from market_features or the tool names trend_tool, valuation_tool, and risk_tool.\n\n"

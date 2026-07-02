@@ -30,9 +30,9 @@ greedy on a simple budget constraint). Hence regret = oracle_utility - allocator
 
 Pre-registration / validity
 ----------------------------
-The ``model_signal`` risk function below is fixed a priori and is NOT tuned to the
-result. Tuning its constants to maximize the headline would be a construct-validity
-violation; do not do it.
+The ``model_signal`` risk function below is fixed a priori before result inspection.
+Tuning its constants to maximize the headline would be a construct-validity violation;
+avoid it.
 """
 
 from __future__ import annotations

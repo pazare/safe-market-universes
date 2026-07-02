@@ -44,7 +44,7 @@ python -m pytest tests/test_oversight_allocation.py   # 11 tests checking the me
 
 ## Motivation
 
-Most agent demos are judged by surface plausibility: the answer sounds reasonable, cites some tools, and appears coherent. That is not the same as being safe to rely on over multiple sequential decisions. This repo narrows a multi-agent stock-analysis project into a benchmark-first artifact for one deployment-critical behavior: **evidence-integrity triage under a finite review budget**. The useful output is a model-intrinsic measure of how well an agent rations scarce supervision under evidence stress, rather than a BUY or SELL recommendation.
+Most agent demos are judged by surface plausibility: the answer sounds reasonable, cites some tools, and appears coherent. Surface plausibility can still fall short of safety over multiple sequential decisions. This repo narrows a multi-agent stock-analysis project into a benchmark-first artifact for one deployment-critical behavior: **evidence-integrity triage under a finite review budget**. The useful output is a model-intrinsic measure of how well an agent rations scarce supervision under evidence stress rather than a BUY or SELL recommendation.
 
 The supporting diagnostics are deliberately subordinate to that flagship construct:
 
@@ -72,7 +72,7 @@ flowchart LR
 
 ## Concrete Failure Example
 
-In the canonical headline artifact at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json), a TSLA recent-drawdown step is labeled `oversight_miss`, `regime_shift_brittleness`, and `state_tracking_failure`: the overseer recognized unresolved directional risk, but the finite budget was already exhausted, so the system approved `HOLD` while the realized outcome was `BUY`. That is the kind of failure this benchmark is built to surface. Although the system was not flagrantly noncompliant, it was still not safe enough to trust in a brittle regime.
+In the canonical headline artifact at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json), a TSLA recent-drawdown step is labeled `oversight_miss`, `regime_shift_brittleness`, and `state_tracking_failure`: the overseer recognized unresolved directional risk, yet budget exhaustion led the system to approve `HOLD` while the realized outcome was `BUY`. That is the kind of failure this benchmark is built to surface. The system remained formally compliant while still falling short of a trust threshold in a brittle regime.
 
 ## Headline Artifact Contract
 
@@ -317,7 +317,7 @@ python scripts/check_report_consistency.py           # README numbers vs committ
 python scripts/check_croissant_metadata.py metadata/smu_croissant.json
 ```
 
-The artifact validator checks completion and internal consistency rather than just file presence: `progress.json`, episode files, trajectory counts, audit-candidate counts, ticker lists, action distribution, total reward, and utility-per-intervention semantics must all match the run log.
+The artifact validator checks completion and internal consistency beyond file presence: `progress.json`, episode files, trajectory counts, audit-candidate counts, ticker lists, action distribution, total reward, and utility-per-intervention semantics must all match the run log.
 
 ### Operational Tooling
 
@@ -358,6 +358,42 @@ Check optional academic data access through WRDS (if institutional WRDS credenti
 ```bash
 python scripts/check_academic_data.py
 ```
+
+## Run the ML Backtest
+
+The deterministic ML pipeline trains on historical features, tunes ridge regularization plus threshold or rank-based policy selection on a validation slice, then scores the selected policy on a later test period with multi-goal minimax regret. It calls no OpenAI models and places no trades.
+
+Default five-stock ML backtest:
+
+```bash
+python scripts/run_ml_backtest.py
+```
+
+Equivalent main entrypoint:
+
+```bash
+python -m src.main --ml-backtest COST HIMS SMCI JNJ TSLA \
+  --ml-train-start 2024-01-02 \
+  --ml-train-end 2024-12-31 \
+  --ml-test-start 2025-01-02 \
+  --ml-test-end 2025-12-31
+```
+
+The report writes `outputs/ml_backtest.json` with the selected model, train/validation/test row counts, baseline comparisons, per-decision records, the strict minimax-regret scorecard, and a practical period gate. The math and evidence contract are documented in [`report/ml_backtest_methodology.md`](report/ml_backtest_methodology.md).
+
+Validate the generated artifact's utility/regret math and declared gates:
+
+```bash
+python scripts/check_ml_backtest.py outputs/ml_backtest.json
+```
+
+Run paper-only hypothetical monitoring:
+
+```bash
+python scripts/run_hypothetical_monitor.py --iterations 4
+```
+
+This writes `outputs/hypothetical_monitor/monitor_summary.json` and one validated ML backtest per synthetic scenario. "Deployable" here means paper-only monitoring: no orders, no external side effects, and automatic blocking when artifact validation, life-safety, drawdown, CVaR, mean-regret, or practical-period gates fail.
 
 ## Publication Metadata
 
@@ -431,6 +467,7 @@ Committee-workflow outputs (generated locally at run time and not committed):
 - `outputs/<TICKER>.json`
 - `outputs/summary.json`
 - `outputs/backtest.json`
+- `outputs/ml_backtest.json`
 
 ## Secrets
 

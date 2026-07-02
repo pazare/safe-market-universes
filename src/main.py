@@ -29,6 +29,7 @@ from src.benchmark.spec import (
 from src.config import REPORT_DIR, load_environment
 from src.llm import verify_openai_call
 from src.market_data import verify_yfinance_fetch
+from src.ml_pipeline import MLBacktestConfig, run_ml_backtest
 from src.orchestration import build_graph, export_graph_mermaid, write_summary
 
 DEFAULT_ANALYSIS_TICKERS = ["COST", "HIMS", "SMCI", "JNJ", "TSLA"]
@@ -69,6 +70,11 @@ def parse_args() -> argparse.Namespace:
         "--benchmark",
         action="store_true",
         help="Run the Safe MarketUniverses benchmark instead of the multi-strategy analysis workflow.",
+    )
+    parser.add_argument(
+        "--ml-backtest",
+        action="store_true",
+        help="Run the deterministic ML backtest and multi-goal minimax-regret scorecard without LLM calls.",
     )
     parser.add_argument(
         "--benchmark-episodes",
@@ -128,6 +134,16 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_BACKTEST_HOLD_BAND_PCT,
         help="Absolute forward-return band treated as HOLD in the backtest scorecard.",
     )
+    parser.add_argument("--ml-train-start", default="2024-01-02", help="ML backtest train period start date.")
+    parser.add_argument("--ml-train-end", default="2024-12-31", help="ML backtest train period end date.")
+    parser.add_argument("--ml-test-start", default="2025-01-02", help="ML backtest test period start date.")
+    parser.add_argument("--ml-test-end", default="2025-12-31", help="ML backtest test period end date.")
+    parser.add_argument(
+        "--ml-rebalance-days",
+        type=int,
+        default=20,
+        help="Trading-day spacing between ML test decisions.",
+    )
     return parser.parse_args()
 
 
@@ -171,6 +187,31 @@ def benchmark_run(
         run_id=benchmark_run_id,
     )
     print(f"Saved Safe MarketUniverses benchmark outputs at {summary_path}.")
+
+
+def ml_backtest_run(
+    tickers: list[str],
+    *,
+    train_start: str,
+    train_end: str,
+    test_start: str,
+    test_end: str,
+    forward_days: int,
+    hold_band_pct: float,
+    rebalance_days: int,
+) -> None:
+    config = MLBacktestConfig(
+        tickers=tickers,
+        train_start=train_start,
+        train_end=train_end,
+        test_start=test_start,
+        test_end=test_end,
+        forward_days=forward_days,
+        hold_band_pct=hold_band_pct,
+        rebalance_days=rebalance_days,
+    )
+    output_path = run_ml_backtest(config)
+    print(f"Saved deterministic ML minimax-regret backtest at {output_path}.")
 
 
 def full_run(
@@ -252,6 +293,19 @@ def main() -> None:
             benchmark_disable_corruption=args.benchmark_disable_corruption,
             benchmark_judge_sample_size=args.benchmark_judge_sample_size,
             benchmark_run_id=args.benchmark_run_id,
+        )
+        return
+
+    if args.ml_backtest:
+        ml_backtest_run(
+            tickers,
+            train_start=args.ml_train_start,
+            train_end=args.ml_train_end,
+            test_start=args.ml_test_start,
+            test_end=args.ml_test_end,
+            forward_days=args.backtest_forward_days,
+            hold_band_pct=args.backtest_hold_band,
+            rebalance_days=args.ml_rebalance_days,
         )
         return
 
