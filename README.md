@@ -10,7 +10,7 @@ This is a safety-evaluation artifact; it is neither a trading system nor investm
 
 ## Quick Start
 
-Install, regenerate the flagship numbers from the committed episode data, and smoke-test the harness. No API key is required for any of the three:
+Install, regenerate the flagship numbers from the committed episode data, and smoke-test the harness. All three work without an API key:
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
@@ -40,7 +40,7 @@ python -m pytest tests/test_oversight_allocation.py   # 11 tests checking the me
 - Paper: [`report/submission_paper.tex`](report/submission_paper.tex) and [`report/submission_paper.pdf`](report/submission_paper.pdf) (build: `python report/build_latex_pdf.py`, or `tectonic report/submission_paper.tex` to compile from the committed assets)
 - Write-up: [`report/blog_misspent_oversight.md`](report/blog_misspent_oversight.md), covering how I caught the benchmark grading itself and the fix.
 
-> **Scope note.** An earlier version of this benchmark reported corruption-conditioned review routing (review rate rising from 10.8% on clean steps to 77.5% on corrupted steps) as its headline. That number mostly measures the harness's own injected corruption markers, so it was demoted to a diagnostic and the metric was rebuilt around oracle regret; the write-up above documents the catch. The flagship metric is model-intrinsic by design: it scores model-emitted uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline.
+> **Scope note.** An earlier version of this benchmark reported corruption-conditioned review routing (review rate rising from 10.8% on clean steps to 77.5% on corrupted steps) as its headline. That number mostly measures the harness's own injected corruption markers, so I demoted it to a diagnostic and rebuilt the metric around oracle regret; the write-up above documents the catch. The flagship metric is model-intrinsic by design: it scores model-emitted uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline.
 
 ## Motivation
 
@@ -97,7 +97,7 @@ This is deliberate: reviewers should be able to inspect a run without rerunning 
 Each episode is a fixed-horizon historical replay over daily U.S. equities. At each step:
 
 1. the environment emits an observation with market features, tool evidence, a mandate, prior-step summary, and visible interruption or corruption events
-2. three strategy agents vote independently and do not see one another’s outputs
+2. three strategy agents vote independently, each blind to the others’ outputs
 3. the abstention layer estimates reliability from disagreement, confidence spread, evidence consistency, and mandate tension
 4. the overseer decides whether to `approve`, `request_verify`, `force_abstain`, or `escalate_human`
 5. the environment advances and logs the transition
@@ -159,7 +159,7 @@ Those scripts are intentionally lightweight and produce reviewer-facing summarie
 
 ## Canonical Run and Supporting Diagnostics
 
-The current strongest empirical artifact is the canonical headline run at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json). It contains `120` episodes, `480` decision steps, `12` tickers, corrupted-evidence events, a budget-1 overseer, and sampled model-based quality judging. Two provenance notes for anyone cross-checking the artifact: the run predates the flagship narrowing, so its embedded `thesis` string reflects the earlier, broader framing (the oversight-allocation analysis is computed from its logs by `scripts/export_oversight_allocation.py`), and its `benchmark_config.json` records `model: null`, which means the environment-default model, `gpt-5.4-mini`, was used.
+The current strongest empirical artifact is the canonical headline run at [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json). It contains `120` episodes, `480` decision steps, `12` tickers, corrupted-evidence events, a budget-1 overseer, and sampled model-based quality judging. Two provenance notes for anyone cross-checking the artifact: the run predates the flagship narrowing, so its embedded `thesis` string reflects the earlier, broader framing (`scripts/export_oversight_allocation.py` computes the oversight-allocation analysis from its logs), and its `benchmark_config.json` records `model: null`, which means the run used the environment-default model, `gpt-5.4-mini`.
 
 The flagship result is the oversight-allocation regret in the [Key Finding](#key-finding) above: model-emitted uncertainty allocates review near random. The headline run also yields the supporting diagnostics below. As the scope note above flags, the first two bullets are a **harness diagnostic rather than a model capability**. The overseer escalates on the visible corruption warnings the harness itself injects, so the routing lift mostly measures the harness.
 
@@ -237,7 +237,7 @@ SMU_STEP_TIMEOUT_SECONDS=300
 
 Notes:
 
-- `yfinance` does not require a Yahoo Finance API key for this implementation
+- `yfinance` needs no Yahoo Finance API key for this implementation
 - `.env` is ignored by [`.gitignore`](.gitignore), so keys stay local
 - OpenAI response caching is enabled by default under `.cache/openai/` to keep reruns affordable
 - `OPENAI_TIMEOUT_SECONDS` sets the OpenAI client timeout; `SMU_STEP_TIMEOUT_SECONDS` is the outer wall-clock guardrail for each benchmark decision step
@@ -341,7 +341,7 @@ python scripts/aggregate_publication_suite.py \
 python scripts/check_publication_readiness.py --allow-pending
 ```
 
-Live runs are resumable: rerun the same command with `--resume` and completed episode artifacts are reused. The runner enforces `SMU_STEP_TIMEOUT_SECONDS` around each decision step so a stalled step becomes an explicit progress record rather than unbounded background work.
+Live runs are resumable: rerun the same command with `--resume` to reuse completed episode artifacts. The runner enforces `SMU_STEP_TIMEOUT_SECONDS` around each decision step so a stalled step becomes an explicit progress record rather than unbounded background work.
 
 Build the two-reviewer human audit packet:
 
@@ -351,7 +351,7 @@ python scripts/summarize_human_audit.py outputs/human_audit/smu_headline_v1 --ex
 python scripts/attach_human_audit_summary.py outputs/benchmark/smu_headline_v1 outputs/human_audit/smu_headline_v1 --expected-count 60
 ```
 
-The reviewer packets are generated from the run's canonical `human_audit_candidates.jsonl` so the labeled units match the declared audit slice. Reviewer CSVs include compact JSON evidence fields but omit automated status and failure labels; the adjudication CSV keeps those labels for model-vs-human comparison after both blinded reviews are complete. Existing reviewer and adjudication CSVs are preserved by default so human labels are not erased by regeneration; pass `--force` only when intentionally rebuilding blank CSV templates.
+The reviewer packets are generated from the run's canonical `human_audit_candidates.jsonl` so the labeled units match the declared audit slice. Reviewer CSVs include compact JSON evidence fields but omit automated status and failure labels; the adjudication CSV keeps those labels for model-vs-human comparison after both blinded reviews are complete. Existing reviewer and adjudication CSVs are preserved by default, so regeneration leaves human labels intact; pass `--force` only when intentionally rebuilding blank CSV templates.
 
 Check optional academic data access through WRDS (if institutional WRDS credentials are available, set `WRDS_USERNAME` locally and install the optional adapter with `pip install -e ".[wrds]"`):
 
@@ -471,4 +471,4 @@ Committee-workflow outputs (generated locally at run time and not committed):
 
 ## Secrets
 
-No API keys are required to inspect the committed artifacts; every headline number regenerates from the committed logs. Live runs read `OPENAI_API_KEY` from a local `.env`, which is gitignored. Cached model responses under `.cache/openai/` stay local and contain no credentials.
+Inspecting the committed artifacts requires no API keys; every headline number regenerates from the committed logs. Live runs read `OPENAI_API_KEY` from a local `.env`, which is gitignored. Cached model responses under `.cache/openai/` stay local and contain no credentials.

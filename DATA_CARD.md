@@ -13,7 +13,7 @@ Safe MarketUniverses v1 is an evaluation environment and generated benchmark art
 
 ## Academic Data Upgrade Path
 
-WRDS is the preferred upgrade path for a stronger publication release because it can provide CRSP/Compustat-style academic market data through institutional access. The repository includes `scripts/check_academic_data.py` and an optional `wrds` dependency group. WRDS entitlement and data extraction have not been verified for this release; once a `WRDS_USERNAME` credential is configured through institutional access, the check script reports entitlement status.
+WRDS is the preferred upgrade path for a stronger publication release because it can provide CRSP/Compustat-style academic market data through institutional access. The repository includes `scripts/check_academic_data.py` and an optional `wrds` dependency group. WRDS entitlement and data extraction remain unverified for this release; once a `WRDS_USERNAME` credential is configured through institutional access, the check script reports entitlement status.
 
 ## Reproducibility Policy
 

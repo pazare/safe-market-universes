@@ -8,7 +8,7 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-Set `OPENAI_API_KEY` only for LLM-powered benchmark runs. Unit tests and the local smoke benchmark do not require an API key.
+Set `OPENAI_API_KEY` only for LLM-powered benchmark runs. Unit tests and the local smoke benchmark run without an API key.
 
 ## Verify
 
@@ -43,7 +43,7 @@ python scripts/preflight_models.py
 python scripts/preflight_models.py --live-response-check
 ```
 
-The first command checks registry/model availability. The second command also makes one minimal Responses API call per configured model so quota and authentication failures are detected before a long benchmark cell starts.
+The first command checks registry/model availability. The second command also makes one minimal Responses API call per configured model, so it catches quota and authentication failures before a long benchmark cell starts.
 
 Run the full publication matrix only after confirming API access, cost, and runtime:
 
@@ -65,7 +65,7 @@ python scripts/run_publication_suite.py --live-response-check
 - paper table exports from `scripts/export_paper_tables.py`
 - `outputs/human_audit/<run_id>/human_audit_summary.json`
 
-Human-audit packets must be generated from `human_audit_candidates.jsonl`, not reranked independently from `trajectories.jsonl`. Existing reviewer and adjudication CSVs are preserved by default; use `scripts/build_human_audit_packet.py --force` only when intentionally replacing blank templates. A run is not human-audit ready until both reviewer CSVs and all `60` adjudicated labels are complete.
+Human-audit packets must be generated from `human_audit_candidates.jsonl`, not reranked independently from `trajectories.jsonl`. Existing reviewer and adjudication CSVs are preserved by default; use `scripts/build_human_audit_packet.py --force` only when intentionally replacing blank templates. A run becomes human-audit ready only when both reviewer CSVs and all `60` adjudicated labels are complete.
 
 ## Known Non-Determinism
 

@@ -37,7 +37,7 @@ The artifact validator requires a completed `progress.json`, matching episode fi
 
 ## Review Artifacts
 
-Human audit tooling writes two blinded reviewer packets, an adjudication file, and an agreement summary under `outputs/human_audit/<run_id>/` by default. The target audit size is `60` prioritized steps selected from the benchmark run's `human_audit_candidates.jsonl`. Existing reviewer and adjudication CSVs are no-clobber by default to protect human labels; `--force` is required to intentionally overwrite them. `scripts/attach_human_audit_summary.py --expected-count 60` attaches the audit summary back to a benchmark `summary.json`; readiness remains blocked until both reviewer packets and all adjudication labels are complete.
+Human audit tooling writes two blinded reviewer packets, an adjudication file, and an agreement summary under `outputs/human_audit/<run_id>/` by default. The target audit size is `60` prioritized steps selected from the benchmark run's `human_audit_candidates.jsonl`. Existing reviewer and adjudication CSVs are no-clobber by default to protect human labels; overwriting them requires an explicit `--force`. `scripts/attach_human_audit_summary.py --expected-count 60` attaches the audit summary back to a benchmark `summary.json`; readiness remains blocked until both reviewer packets and all adjudication labels are complete.
 
 Reviewer packets include compact JSON evidence columns for market features, tool evidence, committee votes, abstention state, and overseer decisions. The blinded reviewer files intentionally omit automated audit status and failure labels; the adjudication file retains those automated labels only for post-review model-vs-human comparison.
 

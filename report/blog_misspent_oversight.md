@@ -2,7 +2,7 @@
 
 *Safe MarketUniverses: a model-intrinsic benchmark for whether an LLM's own uncertainty can spend a scarce human-review budget where it matters.*
 
-## The problem
+## The problem: scarce human review
 
 LLM agents are starting to make consequential recommendations under a hard constraint nobody can wish away: **human review is scarce.** You can't put a person behind every decision, so a deployed agent has to ration oversight, spending its limited budget of "stop and verify / escalate to a human" tokens on the decisions that actually need them.
 
@@ -20,7 +20,7 @@ So I built the metric the other way around, to isolate the model:
 
 The headline allocator, **model-signal**, ranks steps using *only* the committee's own confidence, verification need, and disagreement, never the harness rules, never the hidden utilities. The corruption-routing number stays in the paper, but as a *harness diagnostic*, not the result. This is the [Agentic Benchmark Checklist](https://arxiv.org/abs/2507.02825) principle of construct validity applied directly: a benchmark should be solvable only by the capability it claims to measure.
 
-## What the benchmark shows
+## Results
 
 ![Oversight-allocation regret and corruption recall](figures/submission/oversight_allocation.png)
 
@@ -32,7 +32,7 @@ On 120 episodes / 480 steps, the model's own signal lands near random, and the b
 
 The decision-relevant finding: a model that is **comparatively well calibrated on average** (committee ECE **0.102**, versus 0.264 for the hand-coded heuristic) does **not, on its own, concentrate review on the steps that need it.** Good average calibration is not the same as knowing *where* a human should look. That distinction is exactly what a team must measure before triaging scarce human review with model confidence. The result is stable across three seeds, with a seed-to-seed range of 0.004.
 
-## What I'm claiming, and what I'm not
+## Scope of claims
 
 This is **not** a trading strategy, alpha, financial advice, or a model leaderboard. The contribution is a **construct**: budgeted oversight allocation, measured as regret against an exact oracle, with the model cleanly separated from the harness.
 

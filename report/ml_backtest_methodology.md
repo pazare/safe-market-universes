@@ -154,6 +154,6 @@ An iteration is blocked unless all of the following are true:
 - CVaR 95 loss is at or below the configured limit.
 - Mean weighted max-goal regret is at or below the configured limit.
 
-The strict minimax gate is still reported. When strict minimax fails but the practical gate passes, the monitor may approve paper monitoring, but it keeps the warning visible and does not authorize live execution.
+The strict minimax gate is still reported. When strict minimax fails but the practical gate passes, the monitor may approve paper monitoring, but it keeps the warning visible and never authorizes live execution.
 
 The scorecard is evidence for offline research only. It is not investment advice and it does not authorize execution.

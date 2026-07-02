@@ -5,7 +5,7 @@
 - Python version: `>=3.11`.
 - Install command: `pip install -e ".[dev]"`.
 - Optional WRDS adapter: `pip install -e ".[wrds]"`.
-- Unit and smoke tests do not require API keys.
+- Unit and smoke tests run without API keys.
 - LLM-powered benchmark reruns require `OPENAI_API_KEY`.
 
 ## Determinism And Parameters

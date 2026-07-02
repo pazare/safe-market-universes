@@ -1,8 +1,8 @@
 # AI Use Disclosure
 
-AI assistance was used to help implement and edit portions of the code, tests, documentation, and report scaffolding for this repository.
+AI assistance helped implement and edit portions of the code, tests, documentation, and report scaffolding for this repository.
 
-Human responsibility remains with the repository maintainer. All AI-assisted changes should be reviewed through:
+Human responsibility remains with the repository maintainer. Review all AI-assisted changes with:
 
 ```bash
 pytest -q
