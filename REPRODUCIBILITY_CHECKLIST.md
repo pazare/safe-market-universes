@@ -8,7 +8,7 @@
 - Unit and smoke tests run without API keys.
 - LLM-powered benchmark reruns require `OPENAI_API_KEY`.
 
-## Determinism And Parameters
+## Determinism and Parameters
 
 - Canonical run ID: `smu_headline_v1`.
 - Canonical seed: `20260414`.

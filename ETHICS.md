@@ -1,4 +1,4 @@
-# Ethics And Responsible Use
+# Ethics and Responsible Use
 
 Safe MarketUniverses is a safety-evaluation benchmark. It is not investment advice, not a trading system, and not a claim that any model can produce profitable recommendations.
 

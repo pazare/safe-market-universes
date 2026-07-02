@@ -18,9 +18,9 @@ So I built the metric the other way around, to isolate the model:
 - An **oracle** spends its review budget on the top-gain steps, which is provably optimal under a cardinality budget.
 - Score any allocator by **regret** against that oracle.
 
-The headline allocator, **model-signal**, ranks steps using *only* the committee's own confidence, verification need, and disagreement, never the harness rules, never the hidden utilities. The corruption-routing number stays in the paper, but as a *harness diagnostic*, not the result. This is the [Agentic Benchmark Checklist](https://arxiv.org/abs/2507.02825) principle of construct validity applied directly: a benchmark should be solvable only by the capability it claims to measure.
+The headline allocator, **model-signal**, ranks steps using *only* the committee's own confidence, verification need, and disagreement, never the harness rules, never the hidden utilities. The corruption-routing number stays in the paper, but as a *harness diagnostic* rather than the result. This is the [Agentic Benchmark Checklist](https://arxiv.org/abs/2507.02825) principle of construct validity applied directly: a benchmark should be solvable only by the capability it claims to measure.
 
-## Results
+## Results: the model's signal lands near random
 
 ![Oversight-allocation regret and corruption recall](figures/submission/oversight_allocation.png)
 

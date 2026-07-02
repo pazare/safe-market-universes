@@ -8,7 +8,7 @@ The default publication matrix uses three OpenAI models configured in `benchmark
 - `gpt-5.4` (`strong_generalist`): strong general-purpose baseline.
 - `gpt-5.5` (`frontier_reference`): frontier reference model.
 
-**Completed coverage in this release.** Only `gpt-5.4-mini` has committed runs, covering 18 of its 18 grid cells. The `gpt-5.4` and `gpt-5.5` arms are at 0 of 18: the first `gpt-5.4` cell failed on `external_api_insufficient_quota` and the remaining cells were not run. All headline results derive from the single `gpt-5.4-mini` generator by design. The three-model matrix described here and below is the planned suite, not completed coverage, and a preflight reporting a model as `available` means it was reachable, not that its cells were evaluated.
+**Completed coverage in this release.** Only `gpt-5.4-mini` has committed runs, covering 18 of its 18 grid cells. The `gpt-5.4` and `gpt-5.5` arms are at 0 of 18: the first `gpt-5.4` cell failed on `external_api_insufficient_quota` and the remaining cells were not run. All headline results derive from the single `gpt-5.4-mini` generator by design. The three-model matrix described here and below is the planned suite rather than completed coverage, and a preflight reporting a model as `available` means it was reachable, not that its cells were evaluated.
 
 A preflight checks model availability before expensive runs. If a model is unavailable to the executing account, the run records `model_unavailable` and never silently substitutes another model.
 
@@ -38,5 +38,5 @@ The committed `outputs/benchmark/publication_suite_manifest.json` is a live-run 
 ## Known Limitations
 
 - Model outputs may vary across backend updates even with fixed prompts and seeds.
-- Structured outputs constrain schema shape but do not guarantee factual quality.
+- Structured outputs constrain schema shape without guaranteeing factual quality.
 - API availability, latency, and model access can affect rerun completeness.

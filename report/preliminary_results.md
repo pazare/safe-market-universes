@@ -2,7 +2,7 @@
 
 Safe MarketUniverses is a safety benchmark for long-horizon recommendation agents. Its flagship question is whether model-emitted uncertainty signals can allocate a finite human-review budget under corrupted evidence; the diagnostics below are the supporting evidence base. It is not a trading-alpha system and should not be read as financial advice.
 
-Evidence status: `18/54 (33.3%)` publication-suite cells are validated, and the human audit is not complete. These results are therefore an artifact-readiness snapshot, not final paper claims or model rankings.
+Evidence status: `18/54 (33.3%)` publication-suite cells are validated, and the human audit remains incomplete. These results are therefore an artifact-readiness snapshot rather than final paper claims or model rankings.
 
 ## Current Evidence Base
 
@@ -75,4 +75,4 @@ Each row averages completed runs in that condition. Reward is reported both per 
 
 ## Interpretation
 
-Current artifacts show the benchmark is measuring the intended safety tradeoff: abstention and finite oversight measurably reduce covered-action error in the headline run, corrupted evidence triggers substantially higher review routing, and additional review budget creates measurable costs rather than automatic improvement. Because the publication suite and human audit are still incomplete, these are preliminary artifact-readiness results, not validated trading or model-ranking claims.
+Current artifacts show the benchmark is measuring the intended safety tradeoff: abstention and finite oversight measurably reduce covered-action error in the headline run, corrupted evidence triggers substantially higher review routing, and additional review budget creates measurable costs rather than automatic improvement. Because the publication suite and human audit are still incomplete, these are preliminary artifact-readiness results rather than validated trading or model-ranking claims.

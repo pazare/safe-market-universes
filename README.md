@@ -170,7 +170,7 @@ The flagship result is the oversight-allocation regret in the [Key Finding](#key
 - the best abstention operating point reaches `+0.0851` gain at threshold `0.8`
 - the hardest named slices are exactly the unstable ones: `recent_drawdown` and `high_momentum_speculative`
 
-The frozen tuning matrix (regenerable with `scripts/run_tuning_matrix.py`; its outputs are local development artifacts and are not committed) validated the operating point before scaling to the full canonical run: budget `1` was the cleanest compromise, while budget `2` reduced false negatives further but reintroduced overreach and unnecessary verification of benign holds.
+The frozen tuning matrix (regenerable with `scripts/run_tuning_matrix.py`; its outputs are local development artifacts and remain uncommitted) validated the operating point before scaling to the full canonical run: budget `1` was the cleanest compromise, while budget `2` reduced false negatives further but reintroduced overreach and unnecessary verification of benign holds.
 
 Headline artifact from [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json):
 
@@ -462,7 +462,7 @@ Benchmark outputs (committed under `outputs/benchmark/` so a reviewer can inspec
 
 - `outputs/benchmark/<run_id>/...`
 
-Committee-workflow outputs (generated locally at run time and not committed):
+Committee-workflow outputs (generated locally at run time and left uncommitted):
 
 - `outputs/<TICKER>.json`
 - `outputs/summary.json`

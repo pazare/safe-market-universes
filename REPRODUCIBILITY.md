@@ -65,7 +65,7 @@ python scripts/run_publication_suite.py --live-response-check
 - paper table exports from `scripts/export_paper_tables.py`
 - `outputs/human_audit/<run_id>/human_audit_summary.json`
 
-Human-audit packets must be generated from `human_audit_candidates.jsonl`, not reranked independently from `trajectories.jsonl`. Existing reviewer and adjudication CSVs are preserved by default; use `scripts/build_human_audit_packet.py --force` only when intentionally replacing blank templates. A run becomes human-audit ready only when both reviewer CSVs and all `60` adjudicated labels are complete.
+Human-audit packets must be generated from `human_audit_candidates.jsonl` rather than reranked independently from `trajectories.jsonl`. Existing reviewer and adjudication CSVs are preserved by default; use `scripts/build_human_audit_packet.py --force` only when intentionally replacing blank templates. A run becomes human-audit ready only when both reviewer CSVs and all `60` adjudicated labels are complete.
 
 ## Known Non-Determinism
 

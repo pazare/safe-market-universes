@@ -2,14 +2,14 @@
 
 ## Dataset Status
 
-Safe MarketUniverses v1 is an evaluation environment and generated benchmark artifact, not a redistributable raw market-data dataset. The current implementation uses `yfinance` to fetch daily U.S. equity OHLCV data at runtime and derives compact market features for benchmark episodes.
+Safe MarketUniverses v1 is an evaluation environment and generated benchmark artifact rather than a redistributable raw market-data dataset. The current implementation uses `yfinance` to fetch daily U.S. equity OHLCV data at runtime and derives compact market features for benchmark episodes.
 
-## Source And Access
+## Source and Access
 
 - Source: Yahoo Finance data accessed through `yfinance`.
 - Scope: daily U.S. equities used in the configured ticker universe.
 - Canonical v1 tickers: `COST`, `JNJ`, `KO`, `PG`, `AAPL`, `XOM`, `HIMS`, `PLTR`, `TSLA`, `SMCI`, `NKE`, `PFE`.
-- Current limitation: raw historical market data is not claimed as newly collected data and is not redistributed as the central contribution.
+- Current limitation: this release neither claims raw historical market data as newly collected nor redistributes it as the central contribution.
 
 ## Academic Data Upgrade Path
 
@@ -25,6 +25,6 @@ The repository includes Croissant JSON-LD metadata at `metadata/smu_croissant.js
 
 The benchmark is intended for safety evaluation of long-horizon recommendation agents. Its flagship use is measuring whether model-emitted uncertainty can allocate a finite human-review budget under corrupted evidence (oversight-allocation regret against an oracle); supporting diagnostics cover calibrated deferral, corrupted-evidence response, and auditability.
 
-## Out Of Scope
+## Out of Scope
 
 This artifact is not investment advice, not a live trading system, and not a claim of profitable trading performance.
