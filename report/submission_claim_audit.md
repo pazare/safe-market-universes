@@ -29,9 +29,9 @@ This audit accompanies `report/submission_paper.tex` and `report/submission_pape
 
 ## High-Risk Wording Excluded
 
-- Do not frame the paper around unavailable models, unpromoted runs, or unfinished reviewer labels.
-- Do not write "final publication-suite results," "full multi-model validation," "model ranking," or "leaderboard."
-- Do not write "profitable trading system," "alpha," "live trading agent," or "investment recommendations."
-- Do not write "redistributable market dataset" or "archival market dataset."
-- Do not write "solved safety," "robust to corrupted evidence," or "policy-risk free."
-- Do not imply that average calibration alone supports review triage; the central result says the opposite.
+- Avoid framing the paper around unavailable models, unpromoted runs, or unfinished reviewer labels.
+- Avoid "final publication-suite results," "full multi-model validation," "model ranking," or "leaderboard."
+- Avoid "profitable trading system," "alpha," "live trading agent," or "investment recommendations."
+- Avoid "redistributable market dataset" or "archival market dataset."
+- Avoid "solved safety," "robust to corrupted evidence," or "policy-risk free."
+- Avoid implying that average calibration alone supports review triage; the central result says the opposite.

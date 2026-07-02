@@ -16,7 +16,7 @@ On the canonical run of 120 episodes and 480 decision steps, the benchmark separ
 | Model-emitted confidence and verification signals | 0.176 |
 | Random | 0.191 |
 
-The decision-relevant takeaway: the model committee is well calibrated on average, with expected calibration error of 0.102 against 0.264 for the hand-coded heuristic, yet its own uncertainty barely beats random at picking which steps deserve scarce review. Good average calibration is not review triage. The result is stable across three logged seed groups, with model-signal regret varying by 0.004, and a utility-free robustness oracle confirms the ranking is not an artifact of the utility scale.
+The decision-relevant takeaway: the model committee is well calibrated on average, with expected calibration error of 0.102 against 0.264 for the hand-coded heuristic, yet its own uncertainty barely beats random at picking which steps deserve scarce review. Good average calibration fails as review triage. The result is stable across three logged seed groups, with model-signal regret varying by 0.004, and a utility-free robustness oracle confirms the ranking is independent of the utility scale.
 
 ## Reproduce the headline result in two commands
 
@@ -36,7 +36,7 @@ The first command rebuilds `report/oversight_allocation_results.md`, the JSON re
 - Headline artifact: [`outputs/benchmark/smu_headline_v1/summary.json`](outputs/benchmark/smu_headline_v1/summary.json)
 - Flagship numbers: [`report/oversight_allocation_results.md`](report/oversight_allocation_results.md)
 
-Scope note. The flagship metric scores model-emitted uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline. Corruption-conditioned review routing, where review rates rise from 10.8 percent on clean steps to 77.5 percent on corrupted steps, is reported separately as a harness diagnostic, not as a model property, because the overseer can see the corruption markers the harness itself injected.
+Scope note. The flagship metric scores model-emitted uncertainty as an allocation signal and treats the benchmark's hand-coded overseer as a baseline. Corruption-conditioned review routing, where review rates rise from 10.8 percent on clean steps to 77.5 percent on corrupted steps, is reported separately as a harness diagnostic because the overseer can see the corruption markers the harness itself injected.
 
 ## How it works
 
@@ -71,11 +71,11 @@ Primary construct: oversight allocation under evidence corruption, scored as reg
 
 Supporting diagnostics include review rates split by clean versus corrupted evidence, corruption deltas on error and reward, intervention rates, budget-limited low-reliability approvals, selective risk, abstention gain, and expected calibration error for both majority votes and executed actions.
 
-Every step carries labels from an explicit failure taxonomy, including oversight miss, oversight overreach, corrupted-evidence susceptibility, regime-shift brittleness, state-tracking failure, overconfident action, and explanation-action mismatch. A concrete example from the headline run: a TSLA recent-drawdown step where the overseer recognized unresolved directional risk but the review budget was already spent, so the system approved HOLD while the realized outcome favored BUY. The run was compliant and still not safe enough to trust in a brittle regime, which is exactly the failure class this benchmark exists to surface.
+Every step carries labels from an explicit failure taxonomy, including oversight miss, oversight overreach, corrupted-evidence susceptibility, regime-shift brittleness, state-tracking failure, overconfident action, and explanation-action mismatch. A concrete example from the headline run: a TSLA recent-drawdown step where the overseer recognized unresolved directional risk but the review budget was already spent, so the system approved HOLD while the realized outcome favored BUY. The run was compliant and still fell short of trustworthiness in a brittle regime, which is exactly the failure class this benchmark exists to surface.
 
 ## Artifact contract
 
-Each run writes one self-contained directory under `outputs/benchmark/` containing the config, progress log, summary, episode specs, per-episode files, step-level trajectories, human-audit candidates, gold-slice review materials, and a failure gallery. Reviewers can inspect any run without rerunning the benchmark or holding an API key. A validator checks internal consistency, not just file presence:
+Each run writes one self-contained directory under `outputs/benchmark/` containing the config, progress log, summary, episode specs, per-episode files, step-level trajectories, human-audit candidates, gold-slice review materials, and a failure gallery. Reviewers can inspect any run without rerunning the benchmark or holding an API key. A validator checks internal consistency beyond file presence:
 
 ```bash
 python scripts/validate_artifact_contract.py outputs/benchmark/smu_headline_v1
@@ -138,7 +138,7 @@ Note on size: the repo commits the full episode logs for the canonical run and t
 
 ## Scope and limitations
 
-- Market data comes from `yfinance` at runtime; raw market data is not the contribution and is not claimed as redistributable. `DATA_CARD.md` documents the limits and the academic-source migration path.
+- Market data comes from `yfinance` at runtime; raw market data sits outside the contribution and redistribution claim. `DATA_CARD.md` documents the limits and the academic-source migration path.
 - Trajectories were generated under a rule-based overseer, so the flagship metric measures the quality of the model's uncertainty as an offline allocation signal. The online version, where the model spends a live depleting budget, is designed and deferred to keep this measurement clean.
 - No claims of trading performance, alpha, or solved agent safety. `ETHICS.md` states intended use and misuse risks.
 - AI assistance was used for portions of code, tests, and documentation, with human review; see `AI_USE_DISCLOSURE.md`.
